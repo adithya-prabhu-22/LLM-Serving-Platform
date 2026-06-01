@@ -23,7 +23,8 @@ PROJECT_DIRS = [
     "infrastructure/monitoring/prometheus",
     "infrastructure/monitoring/grafana/dashboards",
 
-    "tests",
+    "tests/sanity",
+
     "docs",
 
     "requirements",
@@ -89,6 +90,15 @@ PROJECT_FILES = [
     "docs/architecture.md",
     "docs/api.md",
     "docs/deployment.md",
+
+    "tests/sanity/test_activations.py",
+    "tests/sanity/test_attention.py",
+    "tests/sanity/test_embeddings.py",
+    "tests/sanity/test_feedforward.py",
+    "tests/sanity/test_normalization.py",
+    "tests/sanity/test_transformer_block.py",
+    "tests/sanity/test_gpt.py",
+    "tests/sanity/run_all.py",
 
     "requirements/base.txt",
     "requirements/dev.txt",
