@@ -99,6 +99,7 @@ PROJECT_FILES = [
     "tests/sanity/test_transformer_block.py",
     "tests/sanity/test_gpt.py",
     "tests/sanity/run_all.py",
+    "tests/sanity/test_gpt_config.py",
 
     "requirements/base.txt",
     "requirements/dev.txt",
