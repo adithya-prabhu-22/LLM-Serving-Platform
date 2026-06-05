@@ -43,7 +43,7 @@ storage/deployed_models/*
 
 *.model
 *.tokenizer
-
+storage/registry/models.json
 .env
 .env.*
 
