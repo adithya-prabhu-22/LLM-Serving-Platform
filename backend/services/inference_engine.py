@@ -8,10 +8,19 @@ from backend.services.model_loader import (
     load_model,
 )
 
+from backend.services.tokenizer_loader import (
+    load_tokenizer,
+)
+
 
 LOADED_MODELS: dict[
     str,
     GPTModel,
+] = {}
+
+LOADED_TOKENIZERS: dict[
+    str,
+    object,
 ] = {}
 
 
@@ -41,9 +50,17 @@ def load_registered_model(
         ],
     )
 
+    tokenizer = load_tokenizer(
+        model_id
+    )
+
     LOADED_MODELS[
         model_id
     ] = model
+
+    LOADED_TOKENIZERS[
+        model_id
+    ] = tokenizer
 
     return model
 
@@ -66,6 +83,25 @@ def get_loaded_model(
     ]
 
 
+def get_loaded_tokenizer(
+    model_id: str,
+):
+
+    if (
+        model_id
+        not in LOADED_TOKENIZERS
+    ):
+        raise ValueError(
+            f"Tokenizer for "
+            f"'{model_id}' "
+            f"is not loaded."
+        )
+
+    return LOADED_TOKENIZERS[
+        model_id
+    ]
+
+
 def unload_model(
     model_id: str,
 ):
@@ -75,6 +111,14 @@ def unload_model(
         in LOADED_MODELS
     ):
         del LOADED_MODELS[
+            model_id
+        ]
+
+    if (
+        model_id
+        in LOADED_TOKENIZERS
+    ):
+        del LOADED_TOKENIZERS[
             model_id
         ]
 
@@ -96,6 +140,12 @@ def generate(
 
     model = get_loaded_model(
         model_id
+    )
+
+    tokenizer = (
+        get_loaded_tokenizer(
+            model_id
+        )
     )
 
     raise NotImplementedError(

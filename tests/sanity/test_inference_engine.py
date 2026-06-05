@@ -16,6 +16,7 @@ from backend.services.registry_service import (
 from backend.services.inference_engine import (
     load_registered_model,
     get_loaded_model,
+    get_loaded_tokenizer,
     unload_model,
     is_model_loaded,
 )
@@ -83,7 +84,8 @@ def test_model_loading_and_unloading():
         weights_path=str(
             weights_path
         ),
-        tokenizer_path=None,
+        tokenizer_backend="huggingface",
+        tokenizer_path="gpt2",
     )
 
     update_model_status(
@@ -113,9 +115,20 @@ def test_model_loading_and_unloading():
         )
     )
 
+    cached_tokenizer = (
+        get_loaded_tokenizer(
+            model_id
+        )
+    )
+
     assert (
         cached_model
         is loaded_model
+    )
+
+    assert (
+        cached_tokenizer
+        is not None
     )
 
     unload_model(
@@ -138,13 +151,13 @@ def test_reject_non_ready_model():
     )
 
     register_model(
-    model_id=model_id,
-    name="Test GPT",
-    architecture="GPT",
-    config_path="config.json",
-    weights_path="model.safetensors",
-    tokenizer_backend="huggingface",
-    tokenizer_path="tokenizer.json",
+        model_id=model_id,
+        name="Test GPT",
+        architecture="GPT",
+        config_path="config.json",
+        weights_path="model.safetensors",
+        tokenizer_backend="huggingface",
+        tokenizer_path="gpt2",
     )
 
     with pytest.raises(
