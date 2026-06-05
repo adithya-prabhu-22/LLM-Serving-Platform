@@ -19,9 +19,13 @@ PROJECT_DIRS = [
     "storage/logs",
 
     "infrastructure/docker",
-    "infrastructure/kubernetes",
+
+    "infrastructure/monitoring",
     "infrastructure/monitoring/prometheus",
+    "infrastructure/monitoring/grafana",
     "infrastructure/monitoring/grafana/dashboards",
+
+    "infrastructure/kubernetes_future",
 
     "tests/sanity",
 
@@ -52,24 +56,25 @@ PROJECT_FILES = [
     "backend/api/__init__.py",
     "backend/api/upload.py",
     "backend/api/models.py",
-    "backend/api/chat.py",
 
     "backend/services/__init__.py",
     "backend/services/model_loader.py",
-    "backend/services/generator.py",
     "backend/services/validator.py",
+    "backend/services/inference_engine.py",
+    "backend/services/registry_service.py",
+    "backend/services/metrics_service.py",
+    "backend/services/lifecycle_manager.py",
 
     "backend/database/__init__.py",
     "backend/database/db.py",
     "backend/database/models.py",
+    "backend/database/model_registry.py",
 
     "backend/schemas/__init__.py",
     "backend/schemas/upload_schema.py",
-    "backend/schemas/chat_schema.py",
 
     "frontend/templates/index.html",
     "frontend/templates/upload.html",
-    "frontend/templates/chat.html",
 
     "frontend/static/css/style.css",
     "frontend/static/js/app.js",
@@ -80,10 +85,6 @@ PROJECT_FILES = [
 
     "infrastructure/docker/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
-
-    "infrastructure/kubernetes/deployment.yaml",
-    "infrastructure/kubernetes/service.yaml",
-    "infrastructure/kubernetes/hpa.yaml",
 
     "infrastructure/monitoring/prometheus/prometheus.yml",
 
@@ -98,8 +99,8 @@ PROJECT_FILES = [
     "tests/sanity/test_normalization.py",
     "tests/sanity/test_transformer_block.py",
     "tests/sanity/test_gpt.py",
-    "tests/sanity/run_all.py",
     "tests/sanity/test_gpt_config.py",
+    "tests/sanity/run_all.py",
 
     "requirements/base.txt",
     "requirements/dev.txt",
@@ -130,7 +131,7 @@ def create_project_structure():
             )
             path.touch()
 
-    print("LLM Serving Platform structure created successfully.")
+    print("LLM Serving Platform V1 structure created successfully.")
 
 
 if __name__ == "__main__":
