@@ -1,3 +1,5 @@
+import torch
+
 from core.models.gpt import GPTModel
 
 from backend.services.registry_service import (
@@ -10,6 +12,10 @@ from backend.services.model_loader import (
 
 from backend.services.tokenizer_loader import (
     load_tokenizer,
+)
+
+from backend.services.text_generation import (
+    generate_tokens,
 )
 
 
@@ -136,6 +142,7 @@ def is_model_loaded(
 def generate(
     model_id: str,
     prompt: str,
+    max_new_tokens: int = 50,
 ):
 
     model = get_loaded_model(
@@ -148,8 +155,36 @@ def generate(
         )
     )
 
-    raise NotImplementedError(
-        "Tokenizer integration "
-        "and text generation "
-        "not implemented yet."
+    encoded = tokenizer.encode(
+        prompt
+    )
+
+    if hasattr(
+        encoded,
+        "ids",
+    ):
+        token_ids = (
+            encoded.ids
+        )
+    else:
+        token_ids = encoded
+
+    input_ids = torch.tensor(
+        [token_ids],
+        dtype=torch.long,
+    )
+
+    output_ids = generate_tokens(
+        model=model,
+        input_ids=input_ids,
+        max_new_tokens=max_new_tokens,
+    )
+
+    output_ids = (
+        output_ids[0]
+        .tolist()
+    )
+
+    return tokenizer.decode(
+        output_ids
     )
