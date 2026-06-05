@@ -6,9 +6,11 @@ PROJECT_DIRS = [
     "core/config",
 
     "backend/api",
+    "backend/api/routes",
+    "backend/api/schemas",
+
     "backend/services",
     "backend/database",
-    "backend/schemas",
 
     "frontend/templates",
     "frontend/static/css",
@@ -17,6 +19,7 @@ PROJECT_DIRS = [
     "storage/uploads",
     "storage/deployed_models",
     "storage/logs",
+    "storage/registry",
 
     "infrastructure/docker",
 
@@ -28,6 +31,12 @@ PROJECT_DIRS = [
     "infrastructure/kubernetes_future",
 
     "tests/sanity",
+
+    "tests/resources",
+    "tests/resources/model_loader",
+    "tests/resources/inference_engine",
+    "tests/resources/inference_generation",
+    "tests/resources/tokenizers",
 
     "docs",
 
@@ -51,27 +60,33 @@ PROJECT_FILES = [
     "core/config/gpt_config.py",
 
     "backend/__init__.py",
-    "backend/main.py",
 
     "backend/api/__init__.py",
-    "backend/api/upload.py",
-    "backend/api/models.py",
+    "backend/api/main.py",
+
+    "backend/api/routes/__init__.py",
+    "backend/api/routes/models.py",
+    "backend/api/routes/generation.py",
+
+    "backend/api/schemas/__init__.py",
+    "backend/api/schemas/register_model_request.py",
+    "backend/api/schemas/generate_request.py",
+    "backend/api/schemas/generate_response.py",
 
     "backend/services/__init__.py",
     "backend/services/model_loader.py",
-    "backend/services/validator.py",
+    "backend/services/tokenizer_loader.py",
+    "backend/services/text_generation.py",
     "backend/services/inference_engine.py",
     "backend/services/registry_service.py",
-    "backend/services/metrics_service.py",
     "backend/services/lifecycle_manager.py",
+    "backend/services/validator.py",
+    "backend/services/metrics_service.py",
 
     "backend/database/__init__.py",
     "backend/database/db.py",
     "backend/database/models.py",
     "backend/database/model_registry.py",
-
-    "backend/schemas/__init__.py",
-    "backend/schemas/upload_schema.py",
 
     "frontend/templates/index.html",
     "frontend/templates/upload.html",
@@ -83,6 +98,8 @@ PROJECT_FILES = [
     "storage/deployed_models/.gitkeep",
     "storage/logs/.gitkeep",
 
+    "storage/registry/models.json",
+
     "infrastructure/docker/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
 
@@ -92,6 +109,8 @@ PROJECT_FILES = [
     "docs/api.md",
     "docs/deployment.md",
 
+    "tests/sanity/run_all.py",
+
     "tests/sanity/test_activations.py",
     "tests/sanity/test_attention.py",
     "tests/sanity/test_embeddings.py",
@@ -100,7 +119,21 @@ PROJECT_FILES = [
     "tests/sanity/test_transformer_block.py",
     "tests/sanity/test_gpt.py",
     "tests/sanity/test_gpt_config.py",
-    "tests/sanity/run_all.py",
+
+    "tests/sanity/test_registry_service.py",
+    "tests/sanity/test_model_loader.py",
+    "tests/sanity/test_model_loader_weights.py",
+    "tests/sanity/test_lifecycle_manager.py",
+    "tests/sanity/test_inference_engine.py",
+    "tests/sanity/test_tokenizer_loader.py",
+    "tests/sanity/test_text_generation.py",
+    "tests/sanity/test_inference_generation.py",
+
+    "tests/resources/.gitkeep",
+    "tests/resources/model_loader/.gitkeep",
+    "tests/resources/inference_engine/.gitkeep",
+    "tests/resources/inference_generation/.gitkeep",
+    "tests/resources/tokenizers/.gitkeep",
 
     "requirements/base.txt",
     "requirements/dev.txt",
@@ -113,25 +146,32 @@ PROJECT_FILES = [
 
 
 def create_project_structure():
+
     root = Path.cwd()
 
     for directory in PROJECT_DIRS:
+
         (root / directory).mkdir(
             parents=True,
             exist_ok=True,
         )
 
     for file_path in PROJECT_FILES:
+
         path = root / file_path
 
         if not path.exists():
+
             path.parent.mkdir(
                 parents=True,
                 exist_ok=True,
             )
+
             path.touch()
 
-    print("LLM Serving Platform V1 structure created successfully.")
+    print(
+        "LLM Serving Platform V1 structure created successfully."
+    )
 
 
 if __name__ == "__main__":
