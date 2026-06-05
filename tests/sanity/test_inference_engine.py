@@ -138,12 +138,13 @@ def test_reject_non_ready_model():
     )
 
     register_model(
-        model_id=model_id,
-        name="Test GPT",
-        architecture="GPT",
-        config_path="config.json",
-        weights_path="model.safetensors",
-        tokenizer_path=None,
+    model_id=model_id,
+    name="Test GPT",
+    architecture="GPT",
+    config_path="config.json",
+    weights_path="model.safetensors",
+    tokenizer_backend="huggingface",
+    tokenizer_path="tokenizer.json",
     )
 
     with pytest.raises(

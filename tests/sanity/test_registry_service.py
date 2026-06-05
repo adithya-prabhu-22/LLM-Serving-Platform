@@ -12,12 +12,13 @@ def test_registry_service():
     model_id = "test_model"
 
     register_model(
-        model_id=model_id,
-        name="Medical GPT",
-        architecture="GPT",
-        config_path="config.json",
-        weights_path="model.safetensors",
-        tokenizer_path="tokenizer.json",
+    model_id=model_id,
+    name="Test GPT",
+    architecture="GPT",
+    config_path="config.json",
+    weights_path="model.safetensors",
+    tokenizer_backend="huggingface",
+    tokenizer_path="tokenizer.json",
     )
 
     model = get_model(
@@ -27,7 +28,7 @@ def test_registry_service():
     assert model["model_id"] == model_id
 
     assert model["name"] == (
-        "Medical GPT"
+        "Test GPT"
     )
 
     models = list_models()
