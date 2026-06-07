@@ -20,6 +20,71 @@ function showToast(message, type = "success") {
   }, 3000);
 }
 
+function showConfirmToast(message, onConfirm) {
+  const container = document.getElementById("notification-container");
+
+  const toast = document.createElement("div");
+
+  toast.className = "notification-toast";
+
+  toast.innerHTML = `
+
+        <div>
+
+            ${message}
+
+        </div>
+
+        <div
+            style="
+                margin-top:12px;
+                display:flex;
+                gap:10px;
+            "
+        >
+
+            <button
+                id="confirm-delete"
+            >
+
+                Delete
+
+            </button>
+
+            <button
+                id="cancel-delete"
+                class="delete-btn"
+            >
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    `;
+
+  container.appendChild(toast);
+
+  toast.querySelector("#confirm-delete").addEventListener(
+    "click",
+
+    () => {
+      onConfirm();
+
+      toast.remove();
+    },
+  );
+
+  toast.querySelector("#cancel-delete").addEventListener(
+    "click",
+
+    () => {
+      toast.remove();
+    },
+  );
+}
+
 async function loadModels() {
   try {
     const response = await fetch("http://127.0.0.1:8000/models");
@@ -56,76 +121,78 @@ function renderModels(models) {
     .map(
       (model) => `
 
-            <div class="model-card">
-
-                <div>
-
-                    <div class="model-name">
-
-                        ${model.name}
-
-                    </div>
-
-                    <div class="model-meta">
-
-                        ID: ${model.model_id}
-
-                    </div>
-
-                    <div class="model-meta">
-
-                        Architecture:
-                        ${model.architecture}
-
-                    </div>
+                <div class="model-card">
 
                     <div>
 
-                        <span class="
-                            status-badge
-                            status-${model.status.toLowerCase()}
-                        ">
+                        <div class="model-name">
 
-                            ${model.status}
+                            ${model.name}
 
-                        </span>
+                        </div>
+
+                        <div class="model-meta">
+
+                            ID: ${model.model_id}
+
+                        </div>
+
+                        <div class="model-meta">
+
+                            Architecture:
+                            ${model.architecture}
+
+                        </div>
+
+                        <div>
+
+                            <span
+                                class="
+                                    status-badge
+                                    status-${model.status.toLowerCase()}
+                                "
+                            >
+
+                                ${model.status}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="model-actions">
+
+                        <button
+                            onclick="
+                                buildModel(
+                                    '${model.model_id}'
+                                )
+                            "
+                        >
+
+                            Build
+
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="
+                                deleteModel(
+                                    '${model.model_id}'
+                                )
+                            "
+                        >
+
+                            Delete
+
+                        </button>
 
                     </div>
 
                 </div>
 
-                <div class="model-actions">
-
-                    <button
-                        onclick="
-                            buildModel(
-                                '${model.model_id}'
-                            )
-                        "
-                    >
-
-                        Build
-
-                    </button>
-
-                    <button
-                        class="delete-btn"
-                        onclick="
-                            deleteModel(
-                                '${model.model_id}'
-                            )
-                        "
-                    >
-
-                        Delete
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        `,
+            `,
     )
     .join("");
 }
@@ -169,31 +236,31 @@ async function buildModel(modelId) {
 }
 
 async function deleteModel(modelId) {
-  const confirmed = confirm(`Delete model '${modelId}'?`);
+  showConfirmToast(
+    `Delete model '${modelId}'?`,
 
-  if (!confirmed) {
-    return;
-  }
+    async () => {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/admin/models/${modelId}`,
 
-  try {
-    const response = await fetch(
-      `http://127.0.0.1:8000/admin/models/${modelId}`,
+          {
+            method: "DELETE",
+          },
+        );
 
-      {
-        method: "DELETE",
-      },
-    );
+        const data = await response.json();
 
-    const data = await response.json();
+        showToast(data.message, "success");
 
-    showToast(data.message, "success");
+        loadModels();
+      } catch (error) {
+        console.error(error);
 
-    loadModels();
-  } catch (error) {
-    console.error(error);
-
-    showToast("Failed to delete model.", "error");
-  }
+        showToast("Failed to delete model.", "error");
+      }
+    },
+  );
 }
 
 loadModels();
