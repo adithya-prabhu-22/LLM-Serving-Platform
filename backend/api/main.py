@@ -4,6 +4,10 @@ from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
 
+from fastapi.middleware.cors import (
+    CORSMiddleware,
+)
+
 from backend.api.routes.health import (
     get_health,
 )
@@ -52,6 +56,18 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.add_middleware(
+
+    CORSMiddleware,
+
+    allow_origins=["*"],
+
+    allow_credentials=True,
+
+    allow_methods=["*"],
+
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root_route():

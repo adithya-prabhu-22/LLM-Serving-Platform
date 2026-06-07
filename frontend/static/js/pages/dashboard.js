@@ -41,7 +41,7 @@ async function loadHealth() {
 
                 <div class="metric-title">
 
-                    📦 Registered Models
+                       Registered Models
 
                 </div>
 
@@ -57,7 +57,7 @@ async function loadHealth() {
 
                 <div class="metric-title">
 
-                    ⚡ Loaded Models
+                       Loaded Models
 
                 </div>
 
@@ -73,7 +73,7 @@ async function loadHealth() {
 
                 <div class="metric-title">
 
-                    🚀 Version
+                       Version
 
                 </div>
 
