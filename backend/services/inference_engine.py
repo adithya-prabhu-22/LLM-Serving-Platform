@@ -4,6 +4,7 @@ from core.models.gpt import GPTModel
 
 from backend.services.registry_service import (
     get_model,
+    update_model_status,
 )
 
 from backend.services.model_loader import (
@@ -30,7 +31,7 @@ LOADED_TOKENIZERS: dict[
 ] = {}
 
 
-def load_registered_model(
+def build_model(
     model_id: str,
 ) -> GPTModel:
 
@@ -38,37 +39,49 @@ def load_registered_model(
         model_id
     )
 
-    if (
-        model_info["status"]
-        != "READY"
-    ):
-        raise ValueError(
-            f"Model '{model_id}' "
-            f"is not ready."
+    update_model_status(
+        model_id,
+        "LOADING",
+    )
+
+    try:
+
+        model = load_model(
+            config_path=model_info[
+                "config_path"
+            ],
+            weights_path=model_info[
+                "weights_path"
+            ],
         )
 
-    model = load_model(
-        config_path=model_info[
-            "config_path"
-        ],
-        weights_path=model_info[
-            "weights_path"
-        ],
-    )
+        tokenizer = load_tokenizer(
+            model_id
+        )
 
-    tokenizer = load_tokenizer(
-        model_id
-    )
+        LOADED_MODELS[
+            model_id
+        ] = model
 
-    LOADED_MODELS[
-        model_id
-    ] = model
+        LOADED_TOKENIZERS[
+            model_id
+        ] = tokenizer
 
-    LOADED_TOKENIZERS[
-        model_id
-    ] = tokenizer
+        update_model_status(
+            model_id,
+            "READY",
+        )
 
-    return model
+        return model
+
+    except Exception:
+
+        update_model_status(
+            model_id,
+            "FAILED",
+        )
+
+        raise
 
 
 def get_loaded_model(
@@ -81,7 +94,7 @@ def get_loaded_model(
     ):
         raise ValueError(
             f"Model '{model_id}' "
-            f"is not loaded."
+            f"is not built."
         )
 
     return LOADED_MODELS[
@@ -100,7 +113,7 @@ def get_loaded_tokenizer(
         raise ValueError(
             f"Tokenizer for "
             f"'{model_id}' "
-            f"is not loaded."
+            f"is not built."
         )
 
     return LOADED_TOKENIZERS[
@@ -108,7 +121,7 @@ def get_loaded_tokenizer(
     ]
 
 
-def unload_model(
+def remove_model(
     model_id: str,
 ):
 
@@ -128,8 +141,13 @@ def unload_model(
             model_id
         ]
 
+    update_model_status(
+        model_id,
+        "REGISTERED",
+    )
 
-def is_model_loaded(
+
+def is_model_built(
     model_id: str,
 ) -> bool:
 
@@ -144,6 +162,14 @@ def generate(
     prompt: str,
     max_new_tokens: int = 50,
 ):
+
+    if not is_model_built(
+        model_id
+    ):
+        raise ValueError(
+            f"Model '{model_id}' "
+            f"is not built."
+        )
 
     model = get_loaded_model(
         model_id

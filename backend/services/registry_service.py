@@ -8,9 +8,7 @@ REGISTRY_PATH = Path(
 
 
 STATUS_VALUES = {
-    "UPLOADED",
-    "VALIDATING",
-    "DEPLOYING",
+    "REGISTERED",
     "LOADING",
     "READY",
     "FAILED",
@@ -84,6 +82,7 @@ def register_model(
     for model in registry:
 
         if model["model_id"] == model_id:
+
             raise ValueError(
                 f"Model '{model_id}' already exists."
             )
@@ -93,7 +92,7 @@ def register_model(
             "model_id": model_id,
             "name": name,
             "architecture": architecture,
-            "status": "UPLOADED",
+            "status": "REGISTERED",
             "config_path": config_path,
             "weights_path": weights_path,
             "tokenizer_backend": tokenizer_backend,
@@ -115,6 +114,7 @@ def get_model(
     for model in registry:
 
         if model["model_id"] == model_id:
+
             return model
 
     raise ValueError(
@@ -133,6 +133,7 @@ def update_model_status(
 ):
 
     if status not in STATUS_VALUES:
+
         raise ValueError(
             f"Invalid status: {status}"
         )
@@ -171,10 +172,39 @@ def delete_model(
     if len(updated_registry) == len(
         registry
     ):
+
         raise ValueError(
             f"Model '{model_id}' not found."
         )
 
     _save_registry(
         updated_registry
+    )
+
+
+def is_model_ready(
+    model_id: str,
+) -> bool:
+
+    model = get_model(
+        model_id
+    )
+
+    return (
+        model["status"]
+        == "READY"
+    )
+
+
+def is_model_registered(
+    model_id: str,
+) -> bool:
+
+    model = get_model(
+        model_id
+    )
+
+    return (
+        model["status"]
+        == "REGISTERED"
     )

@@ -16,10 +16,8 @@ PROJECT_DIRS = [
     "frontend/static/css",
     "frontend/static/js",
 
-    "storage/uploads",
-    "storage/deployed_models",
-    "storage/logs",
     "storage/registry",
+    "storage/logs",
 
     "infrastructure/docker",
 
@@ -65,22 +63,33 @@ PROJECT_FILES = [
     "backend/api/main.py",
 
     "backend/api/routes/__init__.py",
+    "backend/api/routes/admin.py",
     "backend/api/routes/models.py",
     "backend/api/routes/generation.py",
 
     "backend/api/schemas/__init__.py",
-    "backend/api/schemas/register_model_request.py",
+
     "backend/api/schemas/generate_request.py",
     "backend/api/schemas/generate_response.py",
 
+    "backend/api/schemas/upload_model_response.py",
+    "backend/api/schemas/model_status_response.py",
+    "backend/api/schemas/model_info_response.py",
+
     "backend/services/__init__.py",
+
     "backend/services/model_loader.py",
     "backend/services/tokenizer_loader.py",
     "backend/services/text_generation.py",
     "backend/services/inference_engine.py",
+
     "backend/services/registry_service.py",
     "backend/services/lifecycle_manager.py",
     "backend/services/validator.py",
+
+    "backend/services/upload_service.py",
+    "backend/services/s3_service.py",
+
     "backend/services/metrics_service.py",
 
     "backend/database/__init__.py",
@@ -94,11 +103,8 @@ PROJECT_FILES = [
     "frontend/static/css/style.css",
     "frontend/static/js/app.js",
 
-    "storage/uploads/.gitkeep",
-    "storage/deployed_models/.gitkeep",
-    "storage/logs/.gitkeep",
-
     "storage/registry/models.json",
+    "storage/logs/.gitkeep",
 
     "infrastructure/docker/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
@@ -175,4 +181,5 @@ def create_project_structure():
 
 
 if __name__ == "__main__":
+
     create_project_structure()
