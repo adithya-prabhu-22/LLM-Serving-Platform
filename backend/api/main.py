@@ -4,6 +4,10 @@ from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
 
+from backend.api.routes.health import (
+    get_health,
+)
+
 from backend.api.routes.root import (
     root,
 )
@@ -223,3 +227,10 @@ def delete_model_api(
             status_code=404,
             detail=str(error),
         )
+        
+@app.get(
+    "/health"
+)
+def health():
+
+    return get_health()

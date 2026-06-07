@@ -121,7 +121,7 @@ def get_loaded_tokenizer(
     ]
 
 
-def remove_model(
+def unload_model(
     model_id: str,
 ):
 
