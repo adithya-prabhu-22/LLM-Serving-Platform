@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>
+        Upload Model
+    </title>
+
+    <link rel="stylesheet" href="../static/css/style.css">
+
+</head>
+
+<body>
+
+    <div id="navbar"></div>
+
+    <div id="notification-container"></div>
+
+    <div class="page-header">
+
+        <h1>
+
+            Upload Model
+
+        </h1>
+
+        <p>
+
+            Register a new model in the platform.
+
+        </p>
+
+    </div>
+
+    <div class="upload-card">
+
+        <form id="upload-form">
+
+            <div class="upload-grid">
+
+                <div class="form-group">
+
+                    <label>
+
+                        Model ID
+
+                    </label>
+
+                    <input type="text" id="model-id" required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Name
+
+                    </label>
+
+                    <input type="text" id="name" required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Architecture
+
+                    </label>
+
+                    <select id="architecture" required>
+
+                        <option value="gpt">
+
+                            GPT
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Tokenizer Backend
+
+                    </label>
+
+                    <select id="tokenizer-backend" required>
+
+                        <option value="custom_bpe">
+
+                            Custom BPE
+
+                        </option>
+
+                        <option value="huggingface">
+
+                            Hugging Face
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Config File
+
+                    </label>
+
+                    <div class="file-upload">
+
+                        <label for="config-file" class="file-label">
+
+                            Select File
+
+                        </label>
+
+                        <input type="file" id="config-file" hidden required>
+
+                        <span id="config-file-name" class="file-name">
+
+                            No file selected
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Weights File
+
+                    </label>
+
+                    <div class="file-upload">
+
+                        <label for="weights-file" class="file-label">
+
+                            Select File
+
+                        </label>
+
+                        <input type="file" id="weights-file" hidden required>
+
+                        <span id="weights-file-name" class="file-name">
+
+                            No file selected
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Tokenizer File
+
+                    </label>
+
+                    <div class="file-upload">
+
+                        <label for="tokenizer-file" class="file-label">
+
+                            Select File
+
+                        </label>
+
+                        <input type="file" id="tokenizer-file" hidden required>
+
+                        <span id="tokenizer-file-name" class="file-name">
+
+                            No file selected
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <button type="submit" class="upload-btn">
+
+                Upload Model
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <div id="upload-result"></div>
+
+    <script src="../static/js/components/navbar.js"></script>
+
+    <script src="../static/js/app.js"></script>
+
+    <script src="../static/js/pages/upload.js"></script>
+
+</body>
+
+</html>

@@ -455,3 +455,93 @@ button:hover {
       translateX(0);
   }
 }
+
+
+.upload-card {
+
+  background: var(--card-color);
+
+  border-radius: 20px;
+
+  padding: 28px;
+
+  box-shadow: var(--shadow);
+}
+
+.upload-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            3,
+            1fr
+        );
+
+    gap: 24px;
+}
+
+.upload-btn {
+
+  margin-top: 8px;
+
+  min-width: 200px;
+}
+
+.file-upload {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+
+  min-height: 48px;
+}
+
+.file-label {
+
+  background: var(--accent);
+
+  color: white;
+
+  padding: 12px 18px;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  font-weight: 700;
+
+  transition: 0.2s ease;
+}
+
+.file-label:hover {
+
+  transform: translateY(-2px);
+}
+
+.file-name {
+
+  color: var(--secondary-text);
+
+  font-size: 14px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  max-width: 250px;
+}
+
+#upload-result {
+
+  margin-top: 20px;
+}
+
+.upload-card select {
+
+  cursor: pointer;
+}
