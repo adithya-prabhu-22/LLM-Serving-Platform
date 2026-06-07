@@ -1,3 +1,4 @@
 -r base.txt
 fastapi
 uvicorn
+python-multipart
