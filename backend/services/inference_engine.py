@@ -155,7 +155,6 @@ def is_model_built(
         model_id
         in LOADED_MODELS
     )
-
 def generate(
     model_id: str,
     prompt: str,
@@ -199,25 +198,6 @@ def generate(
         dtype=torch.long,
     )
 
-    print(
-        "\n========== GENERATION DEBUG =========="
-    )
-
-    print(
-        "Model:",
-        model_id
-    )
-
-    print(
-        "Requested Max Tokens:",
-        max_new_tokens
-    )
-
-    print(
-        "Input Tokens:",
-        len(token_ids)
-    )
-
     output_ids = generate_tokens(
         model=model,
         input_ids=input_ids,
@@ -232,20 +212,6 @@ def generate(
     generated_ids = output_ids[
         len(token_ids):
     ]
-
-    print(
-        "Output Tokens:",
-        len(output_ids)
-    )
-
-    print(
-        "Generated Tokens:",
-        len(generated_ids)
-    )
-
-    print(
-        "=====================================\n"
-    )
 
     generated_text = (
         tokenizer.decode(
