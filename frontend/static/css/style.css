@@ -326,3 +326,132 @@ button:hover {
   background: rgba(239, 68, 68, 0.15);
   color: var(--danger);
 }
+
+.models-toolbar {
+
+  margin-bottom: 24px;
+}
+
+.models-toolbar input {
+
+  max-width: 450px;
+}
+
+.models-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill,
+      minmax(360px,
+        1fr));
+
+  gap: 24px;
+}
+
+.model-name {
+
+  font-size: 24px;
+
+  font-weight: 800;
+
+  margin-bottom: 12px;
+}
+
+.model-meta {
+
+  color:
+    var(--secondary-text);
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+}
+
+.model-card {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  min-height: 240px;
+}
+
+.model-card:hover {
+
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    0 0 25px rgba(37,
+      99,
+      235,
+      0.25);
+}
+
+#notification-container {
+
+  position: fixed;
+
+  top: 24px;
+
+  right: 24px;
+
+  z-index: 9999;
+}
+
+.notification-toast {
+
+  background:
+    var(--card-color);
+
+  color:
+    var(--text-color);
+
+  padding: 16px 20px;
+
+  border-radius: 12px;
+
+  box-shadow:
+    var(--shadow);
+
+  margin-bottom: 12px;
+
+  min-width: 280px;
+
+  animation:
+    slideIn 0.3s ease;
+}
+
+.notification-success {
+
+  border-left:
+    4px solid var(--success);
+}
+
+.notification-error {
+
+  border-left:
+    4px solid var(--danger);
+}
+
+@keyframes slideIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateX(40px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateX(0);
+  }
+}
