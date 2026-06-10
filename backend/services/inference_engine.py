@@ -11,23 +11,19 @@ from backend.services.model_loader import (
     load_model,
 )
 
-from backend.services.tokenizer_loader import (
-    load_tokenizer,
-)
-
 from backend.services.text_generation import (
     generate_tokens,
+)
+
+from backend.services.tokenizer_service import (
+    encode,
+    decode,
 )
 
 
 LOADED_MODELS: dict[
     str,
     GPTModel,
-] = {}
-
-LOADED_TOKENIZERS: dict[
-    str,
-    object,
 ] = {}
 
 
@@ -39,12 +35,28 @@ def build_model(
         model_id
     )
 
+    print(
+        "\n===== MODEL INFO ====="
+    )
+
+    print(
+        model_info
+    )
+
+    print(
+        "======================\n"
+    )
+
     update_model_status(
         model_id,
         "LOADING",
     )
 
     try:
+
+        print(
+            "STEP 1: Loading model..."
+        )
 
         model = load_model(
             config_path=model_info[
@@ -55,26 +67,50 @@ def build_model(
             ],
         )
 
-        tokenizer = load_tokenizer(
-            model_id
+        print(
+            "STEP 2: Model loaded"
         )
 
         LOADED_MODELS[
             model_id
         ] = model
 
-        LOADED_TOKENIZERS[
-            model_id
-        ] = tokenizer
-
         update_model_status(
             model_id,
             "READY",
         )
 
+        print(
+            "STEP 3: Model ready"
+        )
+
         return model
 
-    except Exception:
+    except Exception as error:
+
+        print(
+            "\n========== MODEL BUILD FAILED =========="
+        )
+
+        print(
+            "Exception Type:"
+        )
+
+        print(
+            type(error)
+        )
+
+        print(
+            "\nException Message:"
+        )
+
+        print(
+            str(error)
+        )
+
+        print(
+            "========================================\n"
+        )
 
         update_model_status(
             model_id,
@@ -102,25 +138,6 @@ def get_loaded_model(
     ]
 
 
-def get_loaded_tokenizer(
-    model_id: str,
-):
-
-    if (
-        model_id
-        not in LOADED_TOKENIZERS
-    ):
-        raise ValueError(
-            f"Tokenizer for "
-            f"'{model_id}' "
-            f"is not built."
-        )
-
-    return LOADED_TOKENIZERS[
-        model_id
-    ]
-
-
 def unload_model(
     model_id: str,
 ):
@@ -130,14 +147,6 @@ def unload_model(
         in LOADED_MODELS
     ):
         del LOADED_MODELS[
-            model_id
-        ]
-
-    if (
-        model_id
-        in LOADED_TOKENIZERS
-    ):
-        del LOADED_TOKENIZERS[
             model_id
         ]
 
@@ -155,6 +164,8 @@ def is_model_built(
         model_id
         in LOADED_MODELS
     )
+
+
 def generate(
     model_id: str,
     prompt: str,
@@ -173,25 +184,9 @@ def generate(
         model_id
     )
 
-    tokenizer = (
-        get_loaded_tokenizer(
-            model_id
-        )
-    )
-
-    encoded = tokenizer.encode(
+    token_ids = encode(
         prompt
     )
-
-    if hasattr(
-        encoded,
-        "ids",
-    ):
-        token_ids = (
-            encoded.ids
-        )
-    else:
-        token_ids = encoded
 
     input_ids = torch.tensor(
         [token_ids],
@@ -213,10 +208,8 @@ def generate(
         len(token_ids):
     ]
 
-    generated_text = (
-        tokenizer.decode(
-            generated_ids
-        )
+    generated_text = decode(
+        generated_ids
     )
 
     return generated_text

@@ -47,7 +47,6 @@ from backend.api.schemas.upload_model_response import (
 from backend.services.validator import (
     validate_config_file,
     validate_weights_file,
-    validate_tokenizer_input,
 )
 
 
@@ -68,6 +67,7 @@ app.add_middleware(
 
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def root_route():
@@ -136,7 +136,23 @@ def build_model(
             model_id
         )
 
-    except ValueError as error:
+    except Exception as error:
+
+        print(
+            "\n========== BUILD ERROR =========="
+        )
+
+        print(
+            type(error)
+        )
+
+        print(
+            str(error)
+        )
+
+        print(
+            "=================================\n"
+        )
 
         raise HTTPException(
             status_code=400,
@@ -183,8 +199,6 @@ async def upload_model_api(
     config_file: UploadFile = File(...),
 
     weights_file: UploadFile = File(...),
-
-    tokenizer_file: UploadFile = File(...),
 ):
 
     try:
@@ -195,10 +209,6 @@ async def upload_model_api(
 
         validate_weights_file(
             weights_file.filename
-        )
-
-        validate_tokenizer_input(
-            tokenizer_file=tokenizer_file.filename,
         )
 
         return upload_model_route(
@@ -212,8 +222,6 @@ async def upload_model_api(
             config_content=await config_file.read(),
 
             weights_content=await weights_file.read(),
-
-            tokenizer_content=await tokenizer_file.read(),
         )
 
     except ValueError as error:
@@ -243,7 +251,8 @@ def delete_model_api(
             status_code=404,
             detail=str(error),
         )
-        
+
+
 @app.get(
     "/health"
 )

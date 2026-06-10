@@ -73,8 +73,6 @@ def register_model(
     architecture: str,
     config_path: str,
     weights_path: str,
-    tokenizer_backend: str | None = None,
-    tokenizer_path: str | None = None,
 ):
 
     registry = _load_registry()
@@ -95,8 +93,6 @@ def register_model(
             "status": "REGISTERED",
             "config_path": config_path,
             "weights_path": weights_path,
-            "tokenizer_backend": tokenizer_backend,
-            "tokenizer_path": tokenizer_path,
         }
     )
 
@@ -169,7 +165,9 @@ def delete_model(
         if model["model_id"] != model_id
     ]
 
-    if len(updated_registry) == len(
+    if len(
+        updated_registry
+    ) == len(
         registry
     ):
 

@@ -11,9 +11,24 @@ def load_config(
     config_path: str | Path,
 ) -> GPTConfig:
 
-    config_path = Path(config_path)
+    config_path = Path(
+        config_path
+    )
+
+    print(
+        "\n===== CONFIG PATH ====="
+    )
+
+    print(
+        config_path
+    )
+
+    print(
+        "=======================\n"
+    )
 
     if not config_path.exists():
+
         raise FileNotFoundError(
             f"Config file not found: {config_path}"
         )
@@ -24,7 +39,35 @@ def load_config(
         encoding="utf-8",
     ) as file:
 
-        config_data = json.load(file)
+        text = file.read()
+
+    print(
+        "\n===== CONFIG FILE ====="
+    )
+
+    print(
+        text
+    )
+
+    print(
+        "=======================\n"
+    )
+
+    config_data = json.loads(
+        text
+    )
+
+    print(
+        "\n===== CONFIG DATA ====="
+    )
+
+    print(
+        config_data
+    )
+
+    print(
+        "=======================\n"
+    )
 
     return GPTConfig(
         **config_data
@@ -44,12 +87,20 @@ def load_model_structure(
     config_path: str | Path,
 ) -> GPTModel:
 
+    print(
+        "Loading model structure..."
+    )
+
     config = load_config(
         config_path
     )
 
     model = build_model(
         config
+    )
+
+    print(
+        "Model structure loaded"
     )
 
     return model
@@ -64,18 +115,72 @@ def load_model_weights(
         weights_path
     )
 
+    print(
+        "\n===== WEIGHTS PATH ====="
+    )
+
+    print(
+        weights_path
+    )
+
+    print(
+        "========================\n"
+    )
+
     if not weights_path.exists():
+
         raise FileNotFoundError(
             f"Weights file not found: {weights_path}"
         )
+
+    print(
+        "Loading safetensors..."
+    )
 
     state_dict = load_file(
         str(weights_path)
     )
 
-    model.load_state_dict(
-        state_dict,
-        strict=False,
+    print(
+        "Safetensors loaded"
+    )
+
+    print(
+        "Number of tensors:",
+        len(state_dict)
+    )
+
+    print(
+        "Loading state dict..."
+    )
+
+    missing_keys, unexpected_keys = (
+        model.load_state_dict(
+            state_dict,
+            strict=False,
+        )
+    )   
+
+    print(
+        "State dict loaded"
+    )
+
+    print(
+        "\n===== MISSING KEYS ====="
+    )
+
+    for key in missing_keys:
+        print(key)
+
+    print(
+        "\n===== UNEXPECTED KEYS ====="
+    )
+
+    for key in unexpected_keys:
+        print(key)
+
+    print(
+        "\n=========================="
     )
 
     model.eval()
@@ -88,6 +193,10 @@ def load_model(
     weights_path: str | Path,
 ) -> GPTModel:
 
+    print(
+        "\n===== LOAD MODEL START ====="
+    )
+
     model = load_model_structure(
         config_path
     )
@@ -95,6 +204,10 @@ def load_model(
     model = load_model_weights(
         model,
         weights_path,
+    )
+
+    print(
+        "===== LOAD MODEL COMPLETE =====\n"
     )
 
     return model

@@ -16,7 +16,3 @@ class ModelInfoResponse(
     config_path: str
 
     weights_path: str
-
-    tokenizer_backend: str | None = None
-
-    tokenizer_path: str | None = None

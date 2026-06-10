@@ -18,7 +18,6 @@ def upload_model_route(
     architecture: str,
     config_content: bytes,
     weights_content: bytes,
-    tokenizer_content: bytes,
 ):
 
     onboard_model(
@@ -27,7 +26,6 @@ def upload_model_route(
         architecture=architecture,
         config_content=config_content,
         weights_content=weights_content,
-        tokenizer_content=tokenizer_content,
     )
 
     return {

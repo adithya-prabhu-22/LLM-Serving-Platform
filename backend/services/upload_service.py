@@ -50,17 +50,6 @@ def get_weights_path(
     )
 
 
-def get_tokenizer_path(
-    model_id: str,
-):
-
-    return (
-        MODEL_STORAGE_DIR
-        / model_id
-        / "tokenizer.json"
-    )
-
-
 def save_file(
     destination_path: Path,
     content: bytes,
@@ -80,7 +69,6 @@ def save_model_files(
     model_id: str,
     config_content: bytes,
     weights_content: bytes,
-    tokenizer_content: bytes,
 ):
 
     create_model_directory(
@@ -101,13 +89,6 @@ def save_model_files(
         weights_content,
     )
 
-    save_file(
-        get_tokenizer_path(
-            model_id
-        ),
-        tokenizer_content,
-    )
-
 
 def get_model_artifacts(
     model_id: str,
@@ -121,11 +102,6 @@ def get_model_artifacts(
         ),
         "weights_path": str(
             get_weights_path(
-                model_id
-            )
-        ),
-        "tokenizer_path": str(
-            get_tokenizer_path(
                 model_id
             )
         ),
@@ -154,10 +130,6 @@ def register_uploaded_model(
         weights_path=artifacts[
             "weights_path"
         ],
-        tokenizer_backend="custom_bpe",
-        tokenizer_path=artifacts[
-            "tokenizer_path"
-        ],
     )
 
 
@@ -167,14 +139,12 @@ def onboard_model(
     architecture: str,
     config_content: bytes,
     weights_content: bytes,
-    tokenizer_content: bytes,
 ):
 
     save_model_files(
         model_id=model_id,
         config_content=config_content,
         weights_content=weights_content,
-        tokenizer_content=tokenizer_content,
     )
 
     register_uploaded_model(
