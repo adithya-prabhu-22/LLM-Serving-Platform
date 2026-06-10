@@ -116,6 +116,45 @@ class GPTModel(nn.Module):
             self.embeddings.token_embedding.weight
         )
 
+        self.apply(
+            self._init_weights
+        )
+
+    def _init_weights(
+        self,
+        module,
+    ):
+
+        if isinstance(
+            module,
+            nn.Linear,
+        ):
+
+            torch.nn.init.normal_(
+                module.weight,
+                mean=0.0,
+                std=0.02,
+            )
+
+            if (
+                module.bias
+                is not None
+            ):
+                torch.nn.init.zeros_(
+                    module.bias
+                )
+
+        elif isinstance(
+            module,
+            nn.Embedding,
+        ):
+
+            torch.nn.init.normal_(
+                module.weight,
+                mean=0.0,
+                std=0.02,
+            )
+
     def forward(
         self,
         input_ids: torch.Tensor,
