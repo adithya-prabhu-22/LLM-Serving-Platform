@@ -4,47 +4,42 @@ from pathlib import Path
 PROJECT_DIRS = [
     "core/models",
     "core/config",
-
     "backend/api",
     "backend/api/routes",
     "backend/api/schemas",
-
     "backend/services",
     "backend/database",
-
     "frontend/templates",
+    "frontend/static",
     "frontend/static/css",
     "frontend/static/js",
-
+    "frontend/static/js/pages",
+    "frontend/static/js/services",
+    "frontend/static/js/components",
     "storage/registry",
     "storage/logs",
-
+    "storage/deployed_models",
+    "training",
+    "training/configs",
+    "training/utils",
     "infrastructure/docker",
-
     "infrastructure/monitoring",
     "infrastructure/monitoring/prometheus",
     "infrastructure/monitoring/grafana",
     "infrastructure/monitoring/grafana/dashboards",
-
     "infrastructure/kubernetes_future",
-
     "tests/sanity",
-
     "tests/resources",
     "tests/resources/model_loader",
     "tests/resources/inference_engine",
     "tests/resources/inference_generation",
-    "tests/resources/tokenizers",
-
     "docs",
-
     "requirements",
 ]
 
 
 PROJECT_FILES = [
     "core/__init__.py",
-
     "core/models/__init__.py",
     "core/models/activations.py",
     "core/models/attention.py",
@@ -53,70 +48,69 @@ PROJECT_FILES = [
     "core/models/normalization.py",
     "core/models/transformer_block.py",
     "core/models/gpt.py",
-
     "core/config/__init__.py",
     "core/config/gpt_config.py",
-
     "backend/__init__.py",
-
     "backend/api/__init__.py",
     "backend/api/main.py",
-
     "backend/api/routes/__init__.py",
+    "backend/api/routes/root.py",
+    "backend/api/routes/health.py",
     "backend/api/routes/admin.py",
     "backend/api/routes/models.py",
     "backend/api/routes/generation.py",
-
     "backend/api/schemas/__init__.py",
-
     "backend/api/schemas/generate_request.py",
     "backend/api/schemas/generate_response.py",
-
     "backend/api/schemas/upload_model_response.py",
     "backend/api/schemas/model_status_response.py",
     "backend/api/schemas/model_info_response.py",
-
     "backend/services/__init__.py",
-
     "backend/services/model_loader.py",
-    "backend/services/tokenizer_loader.py",
+    "backend/services/tokenizer_service.py",
     "backend/services/text_generation.py",
     "backend/services/inference_engine.py",
-
     "backend/services/registry_service.py",
     "backend/services/lifecycle_manager.py",
-    "backend/services/validator.py",
-
     "backend/services/upload_service.py",
+    "backend/services/validator.py",
     "backend/services/s3_service.py",
-
     "backend/services/metrics_service.py",
-
     "backend/database/__init__.py",
     "backend/database/db.py",
     "backend/database/models.py",
     "backend/database/model_registry.py",
-
     "frontend/templates/index.html",
+    "frontend/templates/models.html",
     "frontend/templates/upload.html",
-
+    "frontend/templates/generate.html",
     "frontend/static/css/style.css",
     "frontend/static/js/app.js",
-
+    "frontend/static/js/services/api.js",
+    "frontend/static/js/pages/dashboard.js",
+    "frontend/static/js/pages/models.js",
+    "frontend/static/js/pages/upload.js",
+    "frontend/static/js/pages/generate.js",
+    "frontend/static/js/components/navbar.js",
+    "frontend/static/js/components/model_card.js",
+    "frontend/static/js/components/status_badge.js",
     "storage/registry/models.json",
     "storage/logs/.gitkeep",
-
+    "storage/deployed_models/.gitkeep",
+    "training/train.py",
+    "training/dataset.py",
+    "training/loss.py",
+    "training/evaluate.py",
+    "training/utils/checkpoint.py",
+    "training/utils/save_safetensor.py",
+    "training/configs/gpt_35m.json",
     "infrastructure/docker/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
-
     "infrastructure/monitoring/prometheus/prometheus.yml",
-
     "docs/architecture.md",
     "docs/api.md",
     "docs/deployment.md",
-
     "tests/sanity/run_all.py",
-
     "tests/sanity/test_activations.py",
     "tests/sanity/test_attention.py",
     "tests/sanity/test_embeddings.py",
@@ -125,26 +119,20 @@ PROJECT_FILES = [
     "tests/sanity/test_transformer_block.py",
     "tests/sanity/test_gpt.py",
     "tests/sanity/test_gpt_config.py",
-
     "tests/sanity/test_registry_service.py",
     "tests/sanity/test_model_loader.py",
     "tests/sanity/test_model_loader_weights.py",
     "tests/sanity/test_lifecycle_manager.py",
     "tests/sanity/test_inference_engine.py",
-    "tests/sanity/test_tokenizer_loader.py",
     "tests/sanity/test_text_generation.py",
     "tests/sanity/test_inference_generation.py",
-
     "tests/resources/.gitkeep",
     "tests/resources/model_loader/.gitkeep",
     "tests/resources/inference_engine/.gitkeep",
     "tests/resources/inference_generation/.gitkeep",
-    "tests/resources/tokenizers/.gitkeep",
-
     "requirements/base.txt",
     "requirements/dev.txt",
     "requirements/serving.txt",
-
     ".gitignore",
     "README.md",
     "pyproject.toml",
@@ -152,34 +140,20 @@ PROJECT_FILES = [
 
 
 def create_project_structure():
-
     root = Path.cwd()
 
     for directory in PROJECT_DIRS:
-
-        (root / directory).mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        (root / directory).mkdir(parents=True, exist_ok=True)
 
     for file_path in PROJECT_FILES:
-
         path = root / file_path
 
         if not path.exists():
-
-            path.parent.mkdir(
-                parents=True,
-                exist_ok=True,
-            )
-
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
 
-    print(
-        "LLM Serving Platform V1 structure created successfully."
-    )
+    print("LLM Serving Platform V1 structure created successfully.")
 
 
 if __name__ == "__main__":
-
     create_project_structure()
