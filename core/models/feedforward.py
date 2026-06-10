@@ -3,7 +3,6 @@ import torch.nn as nn
 
 from core.models.activations import (
     get_activation,
-    is_gated_activation,
 )
 
 
@@ -37,32 +36,36 @@ class FeedForward(nn.Module):
                 "dropout must be in the range [0.0, 1.0)."
             )
 
+        activation = activation.lower()
+
+        SUPPORTED_ACTIVATIONS = {
+            "gelu",
+            "relu",
+            "silu",
+            "tanh",
+        }
+
+        if activation not in SUPPORTED_ACTIVATIONS:
+            raise ValueError(
+                f"Unsupported activation '{activation}'. "
+                f"Supported activations: "
+                f"{SUPPORTED_ACTIVATIONS}"
+            )
+
         self.d_model = d_model
         self.ff_dim = ff_dim
 
         self.activation_name = (
-            activation.lower()
-        )
-
-        self.is_gated = (
-            is_gated_activation(
-                self.activation_name
-            )
+            activation
         )
 
         self.activation = get_activation(
-            self.activation_name
-        )
-
-        hidden_dim = (
-            2 * ff_dim
-            if self.is_gated
-            else ff_dim
+            activation
         )
 
         self.fc1 = nn.Linear(
             d_model,
-            hidden_dim,
+            ff_dim,
             bias=bias,
         )
 
@@ -95,14 +98,24 @@ class FeedForward(nn.Module):
                 f"but got {x.size(-1)}"
             )
 
-        x = self.fc1(x)
+        x = self.fc1(
+            x
+        )
 
-        x = self.activation(x)
+        x = self.activation(
+            x
+        )
 
-        x = self.dropout(x)
+        x = self.dropout(
+            x
+        )
 
-        x = self.fc2(x)
+        x = self.fc2(
+            x
+        )
 
-        x = self.dropout(x)
+        x = self.dropout(
+            x
+        )
 
         return x

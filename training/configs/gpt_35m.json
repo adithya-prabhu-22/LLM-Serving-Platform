@@ -1,0 +1,21 @@
+{
+    "vocab_size": 50257,
+
+    "block_size": 1024,
+
+    "d_model": 384,
+
+    "num_heads": 6,
+
+    "num_layers": 8,
+
+    "ff_dim": 1536,
+
+    "activation": "gelu",
+
+    "dropout": 0.1,
+
+    "qkv_bias": false,
+
+    "use_flash_attention": true
+}

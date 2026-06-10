@@ -43,66 +43,12 @@ class Tanh(nn.Module):
         return torch.tanh(x)
 
 
-class SwiGLU(nn.Module):
-
-    def forward(
-        self,
-        x: torch.Tensor,
-    ) -> torch.Tensor:
-
-        gate, value = x.chunk(
-            2,
-            dim=-1,
-        )
-
-        return F.silu(gate) * value
-
-
-class GEGLU(nn.Module):
-
-    def forward(
-        self,
-        x: torch.Tensor,
-    ) -> torch.Tensor:
-
-        gate, value = x.chunk(
-            2,
-            dim=-1,
-        )
-
-        return F.gelu(gate) * value
-
-
-class ReGLU(nn.Module):
-
-    def forward(
-        self,
-        x: torch.Tensor,
-    ) -> torch.Tensor:
-
-        gate, value = x.chunk(
-            2,
-            dim=-1,
-        )
-
-        return F.relu(gate) * value
-
-
-GATED_ACTIVATIONS = {
-    "swiglu",
-    "geglu",
-    "reglu",
+SUPPORTED_ACTIVATIONS = {
+    "gelu",
+    "relu",
+    "silu",
+    "tanh",
 }
-
-
-def is_gated_activation(
-    name: str,
-) -> bool:
-
-    return (
-        name.lower()
-        in GATED_ACTIVATIONS
-    )
 
 
 def get_activation(
@@ -123,18 +69,8 @@ def get_activation(
     if name == "tanh":
         return Tanh()
 
-    if name == "swiglu":
-        return SwiGLU()
-
-    if name == "geglu":
-        return GEGLU()
-
-    if name == "reglu":
-        return ReGLU()
-
     raise ValueError(
         f"Unsupported activation function: {name}. "
         f"Supported activations: "
-        f"gelu, relu, silu, tanh, "
-        f"swiglu, geglu, reglu."
+        f"{SUPPORTED_ACTIVATIONS}"
     )
