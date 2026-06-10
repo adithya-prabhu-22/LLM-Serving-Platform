@@ -33,12 +33,6 @@ uploadForm.addEventListener(
     );
 
     formData.append(
-      "tokenizer_backend",
-
-      document.getElementById("tokenizer-backend").value,
-    );
-
-    formData.append(
       "config_file",
 
       document.getElementById("config-file").files[0],
@@ -50,23 +44,17 @@ uploadForm.addEventListener(
       document.getElementById("weights-file").files[0],
     );
 
-    formData.append(
-      "tokenizer_file",
-
-      document.getElementById("tokenizer-file").files[0],
-    );
-
     resultBox.innerHTML = `
 
-            <div
-                class="notification"
-            >
+        <div
+            class="notification"
+        >
 
-                Uploading model...
+            Uploading model...
 
-            </div>
+        </div>
 
-        `;
+    `;
 
     try {
       const response = await fetch(
@@ -84,18 +72,18 @@ uploadForm.addEventListener(
       if (response.ok) {
         resultBox.innerHTML = `
 
-                    <div
-                        class="
-                            notification
-                            notification-success
-                        "
-                    >
+            <div
+                class="
+                    notification
+                    notification-success
+                "
+            >
 
-                        ${result.message}
+                ${result.message}
 
-                    </div>
+            </div>
 
-                `;
+        `;
 
         uploadForm.reset();
 
@@ -104,42 +92,39 @@ uploadForm.addEventListener(
 
         document.getElementById("weights-file-name").textContent =
           "No file selected";
-
-        document.getElementById("tokenizer-file-name").textContent =
-          "No file selected";
       } else {
         resultBox.innerHTML = `
 
-                    <div
-                        class="
-                            notification
-                            notification-error
-                        "
-                    >
+            <div
+                class="
+                    notification
+                    notification-error
+                "
+            >
 
-                        ${result.detail || result.message || "Upload Failed"}
+                ${result.detail || result.message || "Upload Failed"}
 
-                    </div>
+            </div>
 
-                `;
+        `;
       }
     } catch (error) {
       console.error(error);
 
       resultBox.innerHTML = `
 
-                <div
-                    class="
-                        notification
-                        notification-error
-                    "
-                >
+            <div
+                class="
+                    notification
+                    notification-error
+                "
+            >
 
-                    Failed to connect to backend.
+                Failed to connect to backend.
 
-                </div>
+            </div>
 
-            `;
+        `;
     }
   },
 );
@@ -158,15 +143,6 @@ document.getElementById("weights-file").addEventListener(
 
   function () {
     document.getElementById("weights-file-name").textContent =
-      this.files.length ? this.files[0].name : "No file selected";
-  },
-);
-
-document.getElementById("tokenizer-file").addEventListener(
-  "change",
-
-  function () {
-    document.getElementById("tokenizer-file-name").textContent =
       this.files.length ? this.files[0].name : "No file selected";
   },
 );
