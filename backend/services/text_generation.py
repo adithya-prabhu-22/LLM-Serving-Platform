@@ -42,3 +42,48 @@ def generate_tokens(
         )
 
     return input_ids
+
+
+
+
+@torch.no_grad()
+def generate_tokens_stream(
+    model,
+    input_ids: torch.Tensor,
+    max_new_tokens: int,
+):
+
+    model.eval()
+
+    for _ in range(
+        max_new_tokens
+    ):
+
+        context = input_ids[
+            :,
+            -model.max_len:
+        ]
+
+        logits = model(
+            context
+        )
+
+        next_token_logits = (
+            logits[:, -1, :]
+        )
+
+        next_token = torch.argmax(
+            next_token_logits,
+            dim=-1,
+            keepdim=True,
+        )
+
+        input_ids = torch.cat(
+            [
+                input_ids,
+                next_token,
+            ],
+            dim=1,
+        )
+
+        yield next_token.item()

@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
-
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import (
     CORSMiddleware,
 )
@@ -25,6 +25,7 @@ from backend.api.routes.models import (
 
 from backend.api.routes.generation import (
     generate_text,
+    generate_text_stream,
 )
 
 from backend.api.routes.admin import (
@@ -49,7 +50,9 @@ from backend.services.validator import (
     validate_weights_file,
 )
 
-
+from fastapi.responses import (
+    StreamingResponse,
+)
 app = FastAPI(
     title="LLM Serving Platform",
     version="1.0.0",
@@ -259,3 +262,32 @@ def delete_model_api(
 def health():
 
     return get_health()
+
+@app.post(
+    "/generate/stream"
+)
+def generate_stream_api(
+    request: GenerateRequest,
+):
+
+    try:
+
+        generator = (
+            generate_text_stream(
+                model_id=request.model_id,
+                prompt=request.prompt,
+                max_new_tokens=request.max_new_tokens,
+            )
+        )
+
+        return StreamingResponse(
+            generator,
+            media_type="text/event-stream",
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(error),
+        )

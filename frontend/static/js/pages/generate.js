@@ -48,14 +48,10 @@ async function loadModels() {
 
     if (readyModels.length === 0) {
       modelSelect.innerHTML = `
-
-                <option value="">
-
-                    No READY Models
-
-                </option>
-
-            `;
+        <option value="">
+          No READY Models
+        </option>
+      `;
 
       modelStatus.textContent = "Status: No READY models";
 
@@ -65,17 +61,13 @@ async function loadModels() {
     modelSelect.innerHTML = readyModels
       .map(
         (model) => `
-
-                        <option
-                            value="${model.model_id}"
-                            data-status="${model.status}"
-                        >
-
-                            ${model.name}
-
-                        </option>
-
-                    `,
+            <option
+              value="${model.model_id}"
+              data-status="${model.status}"
+            >
+              ${model.name}
+            </option>
+          `,
       )
       .join("");
 
@@ -87,93 +79,99 @@ async function loadModels() {
   }
 }
 
-clearButton.addEventListener(
-  "click",
+clearButton.addEventListener("click", () => {
+  promptInput.value = "";
 
-  () => {
-    promptInput.value = "";
+  promptInput.focus();
+});
 
-    promptInput.focus();
-  },
-);
+copyButton.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(outputBox.textContent);
 
-copyButton.addEventListener(
-  "click",
+    showToast("Output copied");
+  } catch {
+    showToast("Failed to copy", "error");
+  }
+});
 
-  async () => {
-    try {
-      await navigator.clipboard.writeText(outputBox.textContent);
+generateButton.addEventListener("click", async () => {
+  const prompt = promptInput.value.trim();
 
-      showToast("Output copied");
-    } catch {
-      showToast("Failed to copy", "error");
+  if (!prompt) {
+    showToast("Prompt is required", "error");
+
+    return;
+  }
+
+  if (!modelSelect.value) {
+    showToast("Select a model", "error");
+
+    return;
+  }
+
+  generateButton.disabled = true;
+
+  generateButton.textContent = "Generating...";
+
+  outputBox.textContent = "";
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/generate/stream", {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        model_id: modelSelect.value,
+
+        prompt,
+
+        max_new_tokens: parseInt(maxTokensInput.value),
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+
+      throw new Error(error);
     }
-  },
-);
 
-generateButton.addEventListener(
-  "click",
+    const reader = response.body.getReader();
 
-  async () => {
-    const prompt = promptInput.value.trim();
+    const decoder = new TextDecoder();
 
-    if (!prompt) {
-      showToast("Prompt is required", "error");
+    while (true) {
+      const { done, value } = await reader.read();
 
-      return;
-    }
-
-    if (!modelSelect.value) {
-      showToast("Select a model", "error");
-
-      return;
-    }
-
-    outputBox.textContent = "Generating...";
-
-    try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/generate",
-
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            model_id: modelSelect.value,
-
-            prompt: prompt,
-
-            max_new_tokens: parseInt(maxTokensInput.value),
-          }),
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.detail || "Generation failed");
+      if (done) {
+        break;
       }
 
-      outputBox.textContent = result.response;
-
-      outputModel.textContent =
-        modelSelect.options[modelSelect.selectedIndex].text;
-
-      outputTokens.textContent = maxTokensInput.value;
-
-      showToast("Generation completed");
-    } catch (error) {
-      console.error(error);
-
-      outputBox.textContent = "Generation failed.";
-
-      showToast(error.message, "error");
+      outputBox.textContent += decoder.decode(value, {
+        stream: true,
+      });
     }
-  },
-);
+
+    outputModel.textContent =
+      modelSelect.options[modelSelect.selectedIndex].text;
+
+    outputTokens.textContent = maxTokensInput.value;
+
+    showToast("Generation completed");
+  } catch (error) {
+    console.error(error);
+
+    outputBox.textContent = "Generation failed.";
+
+    showToast(error.message, "error");
+  } finally {
+    generateButton.disabled = false;
+
+    generateButton.textContent = "Generate";
+  }
+});
 
 loadModels();

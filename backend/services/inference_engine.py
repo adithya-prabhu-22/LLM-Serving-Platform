@@ -20,6 +20,9 @@ from backend.services.tokenizer_service import (
     decode,
 )
 
+from backend.services.text_generation import (
+    generate_tokens_stream,
+)
 
 LOADED_MODELS: dict[
     str,
@@ -213,3 +216,40 @@ def generate(
     )
 
     return generated_text
+
+
+def generate_stream(
+    model_id: str,
+    prompt: str,
+    max_new_tokens: int = 50,
+):
+
+    if not is_model_built(
+        model_id
+    ):
+        raise ValueError(
+            f"Model '{model_id}' is not built."
+        )
+
+    model = get_loaded_model(
+        model_id
+    )
+
+    token_ids = encode(
+        prompt
+    )
+
+    input_ids = torch.tensor(
+        [token_ids],
+        dtype=torch.long,
+    )
+
+    for token_id in generate_tokens_stream(
+        model=model,
+        input_ids=input_ids,
+        max_new_tokens=max_new_tokens,
+    ):
+
+        yield (
+            decode([token_id])
+        )
