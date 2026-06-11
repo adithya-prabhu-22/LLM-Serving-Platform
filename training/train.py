@@ -7,49 +7,136 @@ from torch.utils.data import DataLoader, random_split
 
 from core.config.gpt_config import GPTConfig
 from core.models.gpt import GPTModel
+
 from training.dataset import TextChunkDataset
 from training.loss import GPTLoss
 from training.evaluate import evaluate
-from training.utils.save_safetensor import save_safetensor_checkpoint
-from training.utils.checkpoint import save_config
+
+from training.utils.save_safetensor import (
+    save_safetensor_checkpoint,
+)
+
+from training.utils.checkpoint import (
+    save_config,
+)
 
 
-DATA_DIR = "/content/drive/MyDrive/training_data"
-OUTPUT_DIR = "/content/drive/MyDrive/GPT2_35M"
-CONFIG_PATH = "training/configs/gpt_35m.json"
+DATA_DIR = (
+    "/content/drive/MyDrive/"
+    "exp_02b_custom_bpe/text_chunks"
+)
+
+OUTPUT_DIR = (
+    "/content/drive/MyDrive/"
+    "GPT2_35M"
+)
+
+CONFIG_PATH = (
+    "training/configs/gpt_35m.json"
+)
 
 
 def load_config():
-    with open(CONFIG_PATH, "r", encoding="utf-8") as file:
-        config_dict = json.load(file)
-    return GPTConfig(**config_dict)
+
+    with open(
+        CONFIG_PATH,
+        "r",
+        encoding="utf-8",
+    ) as file:
+
+        config_dict = json.load(
+            file
+        )
+
+    return GPTConfig(
+        **config_dict
+    )
 
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters())
+def count_parameters(
+    model,
+):
+
+    return sum(
+        p.numel()
+        for p in model.parameters()
+    )
 
 
 def main():
+
     config = load_config()
 
-    output_dir = Path(OUTPUT_DIR)
-    checkpoint_dir = output_dir / "checkpoints"
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = Path(
+        OUTPUT_DIR
+    )
 
-    save_config(config, output_dir / "config.json")
+    checkpoint_dir = (
+        output_dir
+        / "checkpoints"
+    )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    checkpoint_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    save_config(
+        config,
+        output_dir
+        / "config.json",
+    )
+
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "cpu"
+    )
+
+    print(
+        f"Using device: {device}"
+    )
 
     dataset = TextChunkDataset(
         data_dir=DATA_DIR,
         block_size=config.block_size,
         stride=256,
+        max_files=5,
     )
 
-    train_size = int(0.9 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    print(
+        f"Dataset Samples: "
+        f"{len(dataset):,}"
+    )
+
+    train_size = int(
+        0.9 * len(dataset)
+    )
+
+    val_size = (
+        len(dataset)
+        - train_size
+    )
+
+    train_dataset, val_dataset = (
+        random_split(
+            dataset,
+            [
+                train_size,
+                val_size,
+            ],
+        )
+    )
+
+    print(
+        f"Train Samples: "
+        f"{len(train_dataset):,}"
+    )
+
+    print(
+        f"Validation Samples: "
+        f"{len(val_dataset):,}"
+    )
 
     train_loader = DataLoader(
         train_dataset,
@@ -67,58 +154,152 @@ def main():
         pin_memory=True,
     )
 
-    model = GPTModel(config).to(device)
-    print(f"Parameters: {count_parameters(model):,}")
+    model = GPTModel(
+        config
+    ).to(device)
 
-    optimizer = AdamW(model.parameters(), lr=3e-4, weight_decay=0.1)
+    print(
+        f"Parameters: "
+        f"{count_parameters(model):,}"
+    )
+
+    optimizer = AdamW(
+        model.parameters(),
+        lr=3e-4,
+        weight_decay=0.1,
+    )
+
     criterion = GPTLoss()
-    scaler = torch.cuda.amp.GradScaler(enabled=torch.cuda.is_available())
+
+    scaler = (
+        torch.cuda.amp.GradScaler(
+            enabled=torch.cuda.is_available()
+        )
+    )
 
     num_epochs = 3
-    best_val_loss = float("inf")
 
-    for epoch in range(num_epochs):
+    best_val_loss = float(
+        "inf"
+    )
+
+    for epoch in range(
+        num_epochs
+    ):
+
         model.train()
+
         total_loss = 0.0
 
-        for step, (input_ids, targets) in enumerate(train_loader):
-            input_ids = input_ids.to(device)
-            targets = targets.to(device)
+        for step, (
+            input_ids,
+            targets,
+        ) in enumerate(
+            train_loader
+        ):
+
+            input_ids = (
+                input_ids.to(device)
+            )
+
+            targets = (
+                targets.to(device)
+            )
 
             optimizer.zero_grad()
 
-            with torch.cuda.amp.autocast(enabled=torch.cuda.is_available()):
-                logits = model(input_ids)
-                loss = criterion(logits, targets)
+            with torch.cuda.amp.autocast(
+                enabled=torch.cuda.is_available()
+            ):
 
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
+                logits = model(
+                    input_ids
+                )
+
+                loss = criterion(
+                    logits,
+                    targets,
+                )
+
+            scaler.scale(
+                loss
+            ).backward()
+
+            scaler.step(
+                optimizer
+            )
+
             scaler.update()
 
-            total_loss += loss.item()
+            total_loss += (
+                loss.item()
+            )
 
-            if step % 100 == 0:
-                print(f"Epoch {epoch+1} Step {step} Loss {loss.item():.4f}")
+            if step % 10 == 0:
 
-        train_loss = total_loss / len(train_loader)
-        val_loss, perplexity = evaluate(model, val_loader, criterion, device)
+                print(
+                    f"Epoch "
+                    f"{epoch + 1} "
+                    f"Step "
+                    f"{step} "
+                    f"Loss "
+                    f"{loss.item():.4f}"
+                )
 
-        print(
-            f"\nEpoch {epoch+1}\n"
-            f"Train Loss: {train_loss:.4f}\n"
-            f"Validation Loss: {val_loss:.4f}\n"
-            f"Perplexity: {perplexity:.4f}\n"
+        train_loss = (
+            total_loss
+            / len(train_loader)
         )
 
-        save_safetensor_checkpoint(model, checkpoint_dir / "latest.safetensors")
+        val_loss, perplexity = (
+            evaluate(
+                model,
+                val_loader,
+                criterion,
+                device,
+            )
+        )
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            save_safetensor_checkpoint(model, checkpoint_dir / "best.safetensors")
-            print("New best model saved.")
+        print(
+            f"\nEpoch {epoch + 1}\n"
+            f"Train Loss: "
+            f"{train_loss:.4f}\n"
+            f"Validation Loss: "
+            f"{val_loss:.4f}\n"
+            f"Perplexity: "
+            f"{perplexity:.4f}\n"
+        )
 
-    print("\nTraining Complete")
+        save_safetensor_checkpoint(
+            model,
+            checkpoint_dir
+            / "latest.safetensors",
+        )
+
+        if (
+            val_loss
+            < best_val_loss
+        ):
+
+            best_val_loss = (
+                val_loss
+            )
+
+            save_safetensor_checkpoint(
+                model,
+                checkpoint_dir
+                / "best.safetensors",
+            )
+
+            print(
+                "New best model saved."
+            )
+
+    print(
+        "\nTraining Complete"
+    )
 
 
 if __name__ == "__main__":
+
     main()

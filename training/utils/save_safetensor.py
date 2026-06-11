@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from safetensors.torch import (
-    save_file,
+    save_model,
 )
 
 
@@ -19,7 +19,12 @@ def save_safetensor_checkpoint(
         exist_ok=True,
     )
 
-    save_file(
-        model.state_dict(),
+    save_model(
+        model,
         str(save_path),
+    )
+
+    print(
+        f"Saved checkpoint to "
+        f"{save_path}"
     )

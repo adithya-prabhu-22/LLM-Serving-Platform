@@ -13,12 +13,12 @@ class TextChunkDataset(Dataset):
         data_dir: str,
         block_size: int,
         stride: int = 256,
+        max_files: int | None = None,
     ):
+
         self.samples = []
 
-        self.block_size = (
-            block_size
-        )
+        self.block_size = block_size
 
         self.tokenizer = (
             tiktoken.get_encoding(
@@ -36,7 +36,14 @@ class TextChunkDataset(Dataset):
             )
         )
 
+        if max_files is not None:
+
+            text_files = text_files[
+                :max_files
+            ]
+
         if not text_files:
+
             raise ValueError(
                 f"No .txt files found in "
                 f"{data_dir}"
@@ -47,7 +54,14 @@ class TextChunkDataset(Dataset):
             f"text files"
         )
 
+        total_tokens = 0
+
         for text_file in text_files:
+
+            print(
+                f"Loading "
+                f"{text_file.name}"
+            )
 
             with open(
                 text_file,
@@ -61,6 +75,10 @@ class TextChunkDataset(Dataset):
                 self.tokenizer.encode(
                     text
                 )
+            )
+
+            total_tokens += len(
+                token_ids
             )
 
             if (
@@ -85,12 +103,17 @@ class TextChunkDataset(Dataset):
                 )
 
         print(
-            f"Created "
-            f"{len(self.samples):,} "
-            f"training samples"
+            f"Total Tokens: "
+            f"{total_tokens:,}"
+        )
+
+        print(
+            f"Training Samples: "
+            f"{len(self.samples):,}"
         )
 
         if len(self.samples) == 0:
+
             raise ValueError(
                 "No training samples created."
             )
@@ -113,7 +136,7 @@ class TextChunkDataset(Dataset):
         )
 
         window = token_ids[
-            start :
+            start:
             start
             + self.block_size
             + 1
