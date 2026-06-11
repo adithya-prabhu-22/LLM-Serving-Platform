@@ -51,3 +51,4 @@ storage/registry/models.json
 
 tmp/
 temp/
+.venv/
