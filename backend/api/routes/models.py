@@ -5,6 +5,7 @@ from backend.services.registry_service import (
 
 from backend.services.inference_engine import (
     build_model,
+    is_model_built,
 )
 
 
@@ -42,13 +43,12 @@ def build_model_route(
     model_id: str,
 ):
 
-    model = get_model(
+    get_model(
         model_id
     )
 
-    if (
-        model["status"]
-        == "READY"
+    if is_model_built(
+        model_id
     ):
 
         return {

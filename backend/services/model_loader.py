@@ -7,11 +7,24 @@ from core.config.gpt_config import GPTConfig
 from core.models.gpt import GPTModel
 
 
+def normalize_path(
+    path: str | Path,
+) -> Path:
+
+    return (
+        Path(
+            str(path)
+            .replace("\\", "/")
+        )
+        .resolve()
+    )
+
+
 def load_config(
     config_path: str | Path,
 ) -> GPTConfig:
 
-    config_path = Path(
+    config_path = normalize_path(
         config_path
     )
 
@@ -111,7 +124,7 @@ def load_model_weights(
     weights_path: str | Path,
 ) -> GPTModel:
 
-    weights_path = Path(
+    weights_path = normalize_path(
         weights_path
     )
 
@@ -159,7 +172,7 @@ def load_model_weights(
             state_dict,
             strict=False,
         )
-    )   
+    )
 
     print(
         "State dict loaded"
