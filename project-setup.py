@@ -8,31 +8,35 @@ PROJECT_DIRS = [
     "backend/api/routes",
     "backend/api/schemas",
     "backend/services",
+    "backend/services/aws",
     "backend/database",
     "frontend/templates",
     "frontend/static",
     "frontend/static/css",
     "frontend/static/js",
     "frontend/static/js/pages",
-    "frontend/static/js/services",
     "frontend/static/js/components",
     "storage/registry",
     "storage/logs",
+    "storage/uploads",
     "storage/deployed_models",
     "training",
     "training/configs",
     "training/utils",
     "infrastructure/docker",
+    "infrastructure/docker/backend",
+    "infrastructure/docker/frontend",
     "infrastructure/monitoring",
     "infrastructure/monitoring/prometheus",
     "infrastructure/monitoring/grafana",
     "infrastructure/monitoring/grafana/dashboards",
-    "infrastructure/kubernetes_future",
+    "infrastructure/monitoring/grafana/datasources",
     "tests/sanity",
     "tests/resources",
     "tests/resources/model_loader",
     "tests/resources/inference_engine",
     "tests/resources/inference_generation",
+    "tests/resources/tokenizers",
     "docs",
     "requirements",
 ]
@@ -74,8 +78,9 @@ PROJECT_FILES = [
     "backend/services/lifecycle_manager.py",
     "backend/services/upload_service.py",
     "backend/services/validator.py",
-    "backend/services/s3_service.py",
     "backend/services/metrics_service.py",
+    "backend/services/aws/__init__.py",
+    "backend/services/aws/s3_service.py",
     "backend/database/__init__.py",
     "backend/database/db.py",
     "backend/database/models.py",
@@ -86,16 +91,14 @@ PROJECT_FILES = [
     "frontend/templates/generate.html",
     "frontend/static/css/style.css",
     "frontend/static/js/app.js",
-    "frontend/static/js/services/api.js",
     "frontend/static/js/pages/dashboard.js",
     "frontend/static/js/pages/models.js",
     "frontend/static/js/pages/upload.js",
     "frontend/static/js/pages/generate.js",
     "frontend/static/js/components/navbar.js",
-    "frontend/static/js/components/model_card.js",
-    "frontend/static/js/components/status_badge.js",
     "storage/registry/models.json",
     "storage/logs/.gitkeep",
+    "storage/uploads/.gitkeep",
     "storage/deployed_models/.gitkeep",
     "training/train.py",
     "training/dataset.py",
@@ -104,9 +107,13 @@ PROJECT_FILES = [
     "training/utils/checkpoint.py",
     "training/utils/save_safetensor.py",
     "training/configs/gpt_35m.json",
-    "infrastructure/docker/Dockerfile",
+    "infrastructure/docker/backend/Dockerfile",
+    "infrastructure/docker/frontend/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
+    ".dockerignore",
     "infrastructure/monitoring/prometheus/prometheus.yml",
+    "infrastructure/monitoring/grafana/dashboards/dashboard.json",
+    "infrastructure/monitoring/grafana/datasources/datasource.yml",
     "docs/architecture.md",
     "docs/api.md",
     "docs/deployment.md",
@@ -130,26 +137,37 @@ PROJECT_FILES = [
     "tests/resources/model_loader/.gitkeep",
     "tests/resources/inference_engine/.gitkeep",
     "tests/resources/inference_generation/.gitkeep",
+    "tests/resources/sample_config.json",
+    "tests/resources/tokenizers/.gitkeep",
+    "tests/resources/tokenizers/tokenizer.json",
     "requirements/base.txt",
     "requirements/dev.txt",
     "requirements/serving.txt",
     ".gitignore",
+    ".env.example",
     "README.md",
     "pyproject.toml",
 ]
 
 
 def create_project_structure():
+
     root = Path.cwd()
 
     for directory in PROJECT_DIRS:
-        (root / directory).mkdir(parents=True, exist_ok=True)
+        (root / directory).mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
     for file_path in PROJECT_FILES:
         path = root / file_path
 
         if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
+            path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
             path.touch()
 
     print("LLM Serving Platform V1 structure created successfully.")
