@@ -8,6 +8,11 @@ from backend.services.inference_engine import (
     is_model_built,
 )
 
+from backend.services.metrics_service import (
+    REQUESTS_TOTAL,
+    REQUEST_ERRORS_TOTAL,
+)
+
 
 def get_models():
 
@@ -43,6 +48,10 @@ def build_model_route(
     model_id: str,
 ):
 
+    REQUESTS_TOTAL.labels(
+        endpoint="/models/build"
+    ).inc()
+
     get_model(
         model_id
     )
@@ -72,6 +81,10 @@ def build_model_route(
         }
 
     except Exception as error:
+
+        REQUEST_ERRORS_TOTAL.labels(
+            endpoint="/models/build"
+        ).inc()
 
         raise ValueError(
             f"Failed to build model "

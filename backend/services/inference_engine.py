@@ -1,3 +1,5 @@
+import time
+
 import torch
 
 from core.models.gpt import GPTModel
@@ -13,6 +15,7 @@ from backend.services.model_loader import (
 
 from backend.services.text_generation import (
     generate_tokens,
+    generate_tokens_stream,
 )
 
 from backend.services.tokenizer_service import (
@@ -20,8 +23,15 @@ from backend.services.tokenizer_service import (
     decode,
 )
 
-from backend.services.text_generation import (
-    generate_tokens_stream,
+from backend.services.metrics_service import (
+    MODEL_LOAD_LATENCY_SECONDS,
+    MODEL_LOAD_FAILURES_TOTAL,
+    LOADED_MODELS as LOADED_MODELS_GAUGE,
+    TOKENS_PER_SECOND,
+    PROMPT_TOKENS_TOTAL,
+    GENERATED_TOKENS_TOTAL,
+    REQUEST_INPUT_TOKENS,
+    REQUEST_OUTPUT_TOKENS,
 )
 
 LOADED_MODELS: dict[
@@ -33,6 +43,8 @@ LOADED_MODELS: dict[
 def build_model(
     model_id: str,
 ) -> GPTModel:
+
+    start_time = time.time()
 
     model_info = get_model(
         model_id
@@ -78,6 +90,14 @@ def build_model(
             model_id
         ] = model
 
+        LOADED_MODELS_GAUGE.set(
+            len(LOADED_MODELS)
+        )
+
+        MODEL_LOAD_LATENCY_SECONDS.observe(
+            time.time() - start_time
+        )
+
         update_model_status(
             model_id,
             "READY",
@@ -89,31 +109,9 @@ def build_model(
 
         return model
 
-    except Exception as error:
+    except Exception:
 
-        print(
-            "\n========== MODEL BUILD FAILED =========="
-        )
-
-        print(
-            "Exception Type:"
-        )
-
-        print(
-            type(error)
-        )
-
-        print(
-            "\nException Message:"
-        )
-
-        print(
-            str(error)
-        )
-
-        print(
-            "========================================\n"
-        )
+        MODEL_LOAD_FAILURES_TOTAL.inc()
 
         update_model_status(
             model_id,
@@ -149,9 +147,14 @@ def unload_model(
         model_id
         in LOADED_MODELS
     ):
+
         del LOADED_MODELS[
             model_id
         ]
+
+        LOADED_MODELS_GAUGE.set(
+            len(LOADED_MODELS)
+        )
 
     update_model_status(
         model_id,
@@ -191,15 +194,30 @@ def generate(
         prompt
     )
 
+    PROMPT_TOKENS_TOTAL.inc(
+        len(token_ids)
+    )
+
+    REQUEST_INPUT_TOKENS.observe(
+        len(token_ids)
+    )
+
     input_ids = torch.tensor(
         [token_ids],
         dtype=torch.long,
     )
 
+    start_time = time.time()
+
     output_ids = generate_tokens(
         model=model,
         input_ids=input_ids,
         max_new_tokens=max_new_tokens,
+    )
+
+    elapsed_time = (
+        time.time()
+        - start_time
     )
 
     output_ids = (
@@ -210,6 +228,23 @@ def generate(
     generated_ids = output_ids[
         len(token_ids):
     ]
+
+    GENERATED_TOKENS_TOTAL.inc(
+        len(generated_ids)
+    )
+
+    REQUEST_OUTPUT_TOKENS.observe(
+        len(generated_ids)
+    )
+
+    if (
+        elapsed_time > 0
+        and len(generated_ids) > 0
+    ):
+        TOKENS_PER_SECOND.set(
+            len(generated_ids)
+            / elapsed_time
+        )
 
     generated_text = decode(
         generated_ids
@@ -239,10 +274,22 @@ def generate_stream(
         prompt
     )
 
+    PROMPT_TOKENS_TOTAL.inc(
+        len(token_ids)
+    )
+
+    REQUEST_INPUT_TOKENS.observe(
+        len(token_ids)
+    )
+
     input_ids = torch.tensor(
         [token_ids],
         dtype=torch.long,
     )
+
+    generated_count = 0
+
+    start_time = time.time()
 
     for token_id in generate_tokens_stream(
         model=model,
@@ -250,6 +297,28 @@ def generate_stream(
         max_new_tokens=max_new_tokens,
     ):
 
-        yield (
-            decode([token_id])
+        generated_count += 1
+
+        GENERATED_TOKENS_TOTAL.inc()
+
+        yield decode(
+            [token_id]
+        )
+
+    elapsed_time = (
+        time.time()
+        - start_time
+    )
+
+    REQUEST_OUTPUT_TOKENS.observe(
+        generated_count
+    )
+
+    if (
+        elapsed_time > 0
+        and generated_count > 0
+    ):
+        TOKENS_PER_SECOND.set(
+            generated_count
+            / elapsed_time
         )
