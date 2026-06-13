@@ -53,6 +53,12 @@ from backend.services.validator import (
 from fastapi.responses import (
     StreamingResponse,
 )
+
+from backend.api.routes.metrics import (
+    router as metrics_router,
+)
+
+
 app = FastAPI(
     title="LLM Serving Platform",
     version="1.0.0",
@@ -291,3 +297,7 @@ def generate_stream_api(
             status_code=400,
             detail=str(error),
         )
+        
+app.include_router(
+    metrics_router
+)
