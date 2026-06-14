@@ -114,6 +114,32 @@ RAM_USAGE_MB = Gauge(
 )
 
 
+GPU_UTILIZATION_PERCENT = Gauge(
+    "llm_gpu_utilization_percent",
+    "GPU utilization percentage",
+)
+
+GPU_MEMORY_USED_MB = Gauge(
+    "llm_gpu_memory_used_mb",
+    "GPU memory used in MB",
+)
+
+GPU_MEMORY_UTILIZATION_PERCENT = Gauge(
+    "llm_gpu_memory_utilization_percent",
+    "GPU memory utilization percentage",
+)
+
+GPU_TEMPERATURE_CELSIUS = Gauge(
+    "llm_gpu_temperature_celsius",
+    "GPU temperature in Celsius",
+)
+
+GPU_POWER_WATTS = Gauge(
+    "llm_gpu_power_watts",
+    "GPU power draw in watts",
+)
+
+
 def update_system_metrics():
 
     CPU_USAGE_PERCENT.set(

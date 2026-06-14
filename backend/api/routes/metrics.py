@@ -10,6 +10,10 @@ from backend.services.metrics_service import (
     update_system_metrics,
 )
 
+from backend.services.gpu_metrics_service import (
+    update_gpu_metrics,
+)
+
 router = APIRouter()
 
 
@@ -17,6 +21,8 @@ router = APIRouter()
 def metrics():
 
     update_system_metrics()
+
+    update_gpu_metrics()
 
     return Response(
         content=generate_latest(),
