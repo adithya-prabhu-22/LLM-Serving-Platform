@@ -20,6 +20,9 @@ class GPTConfig:
 
     use_flash_attention: bool = False
 
+    temperature: float = 1.0
+    top_k: int = 50
+
     def __post_init__(self):
 
         if self.vocab_size <= 0:
@@ -68,6 +71,16 @@ class GPTConfig:
         if not self.activation.strip():
             raise ValueError(
                 "activation cannot be empty."
+            )
+
+        if self.temperature <= 0:
+            raise ValueError(
+                "temperature must be positive."
+            )
+
+        if self.top_k <= 0:
+            raise ValueError(
+                "top_k must be positive."
             )
 
         if self.ff_dim is None:

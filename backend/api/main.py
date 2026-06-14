@@ -183,6 +183,8 @@ def generate_api(
             model_id=request.model_id,
             prompt=request.prompt,
             max_new_tokens=request.max_new_tokens,
+            temperature=request.temperature,
+            top_k=request.top_k,
         )
 
     except ValueError as error:
@@ -283,6 +285,8 @@ def generate_stream_api(
                 model_id=request.model_id,
                 prompt=request.prompt,
                 max_new_tokens=request.max_new_tokens,
+                temperature=request.temperature,
+                top_k=request.top_k,
             )
         )
 

@@ -176,6 +176,8 @@ def generate(
     model_id: str,
     prompt: str,
     max_new_tokens: int = 50,
+    temperature: float | None = None,
+    top_k: int | None = None,
 ):
 
     if not is_model_built(
@@ -188,6 +190,17 @@ def generate(
 
     model = get_loaded_model(
         model_id
+    )
+    temperature = (
+        temperature
+        if temperature is not None
+        else model.config.temperature
+    )
+
+    top_k = (
+        top_k
+        if top_k is not None
+        else model.config.top_k
     )
 
     token_ids = encode(
@@ -213,6 +226,8 @@ def generate(
         model=model,
         input_ids=input_ids,
         max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        top_k=top_k,
     )
 
     elapsed_time = (
@@ -257,6 +272,8 @@ def generate_stream(
     model_id: str,
     prompt: str,
     max_new_tokens: int = 50,
+    temperature: float | None = None,
+    top_k: int | None = None,
 ):
 
     if not is_model_built(
@@ -268,6 +285,18 @@ def generate_stream(
 
     model = get_loaded_model(
         model_id
+    )
+    
+    temperature = (
+        temperature
+        if temperature is not None
+        else model.config.temperature
+    )
+
+    top_k = (
+        top_k
+        if top_k is not None
+        else model.config.top_k
     )
 
     token_ids = encode(
@@ -295,6 +324,8 @@ def generate_stream(
         model=model,
         input_ids=input_ids,
         max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        top_k=top_k,
     ):
 
         generated_count += 1

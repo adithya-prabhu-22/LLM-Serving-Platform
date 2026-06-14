@@ -20,6 +20,8 @@ def generate_text(
     model_id: str,
     prompt: str,
     max_new_tokens: int = 50,
+    temperature: float = 1.0,
+    top_k: int = 50,
 ):
 
     REQUESTS_TOTAL.labels(
@@ -36,6 +38,8 @@ def generate_text(
             model_id=model_id,
             prompt=prompt,
             max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
         )
 
         REQUEST_LATENCY_SECONDS.observe(
@@ -63,6 +67,8 @@ def generate_text_stream(
     model_id: str,
     prompt: str,
     max_new_tokens: int = 50,
+    temperature: float = 1.0,
+    top_k: int = 50,
 ):
 
     REQUESTS_TOTAL.labels(
@@ -79,6 +85,8 @@ def generate_text_stream(
             model_id=model_id,
             prompt=prompt,
             max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
         )
 
         REQUEST_LATENCY_SECONDS.observe(
