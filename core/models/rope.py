@@ -25,6 +25,18 @@ def apply_rotary_pos_emb(
     sin: torch.Tensor,
 ):
 
+    cos = torch.repeat_interleave(
+        cos,
+        repeats=2,
+        dim=-1,
+    )
+
+    sin = torch.repeat_interleave(
+        sin,
+        repeats=2,
+        dim=-1,
+    )
+
     cos = cos.unsqueeze(0).unsqueeze(0)
     sin = sin.unsqueeze(0).unsqueeze(0)
 
