@@ -199,14 +199,8 @@ class GPTModel(nn.Module):
                 f"block_size {self.max_len}."
             )
 
-        start_pos = min(
-            past_length,
-            self.max_len - 1,
-        )
-
         x = self.embeddings(
-            input_ids,
-            start_pos=start_pos,
+            input_ids
         )
 
         present_kv = None

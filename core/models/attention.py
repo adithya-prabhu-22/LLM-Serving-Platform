@@ -4,6 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from core.cache.kv_cache import KVCache
+from core.models.rope import (
+    RotaryEmbedding,
+    apply_rotary_pos_emb,
+)
 
 
 class MultiHeadCausalSelfAttention(nn.Module):
@@ -41,6 +45,11 @@ class MultiHeadCausalSelfAttention(nn.Module):
         self.d_model = d_model
         self.num_heads = num_heads
         self.head_dim = d_model // num_heads
+
+        self.rotary_emb = RotaryEmbedding(
+            dim=self.head_dim,
+            max_seq_len=8192,
+        )
 
         self.use_flash_attention = use_flash_attention
         self.dropout_p = dropout
@@ -110,15 +119,52 @@ class MultiHeadCausalSelfAttention(nn.Module):
         ).transpose(1, 2)
 
         past_length = 0
+        present_kv = None
 
         if isinstance(
             past_kv,
             KVCache,
         ):
-
             past_length = len(
                 past_kv
             )
+
+        elif past_kv is None:
+
+            pass
+
+        else:
+
+            raise ValueError(
+                "Unsupported cache type."
+            )
+
+        positions = torch.arange(
+            past_length,
+            past_length + seq_len,
+            device=x.device,
+        )
+
+        positions = torch.clamp(
+            positions,
+            max=8191,
+        )
+
+        cos, sin = self.rotary_emb(
+            positions
+        )
+
+        queries, keys = apply_rotary_pos_emb(
+            queries,
+            keys,
+            cos,
+            sin,
+        )
+
+        if isinstance(
+            past_kv,
+            KVCache,
+        ):
 
             past_kv.append(
                 keys,
@@ -130,17 +176,6 @@ class MultiHeadCausalSelfAttention(nn.Module):
             values = past_kv.get_values()
 
             present_kv = past_kv
-
-        elif use_cache:
-
-            raise ValueError(
-                "KVCache expected when "
-                "use_cache=True"
-            )
-
-        else:
-
-            present_kv = None
 
         if self.use_flash_attention:
 

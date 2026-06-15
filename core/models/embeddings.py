@@ -42,11 +42,6 @@ class GPTEmbeddings(nn.Module):
             d_model,
         )
 
-        self.position_embedding = nn.Embedding(
-            block_size,
-            d_model,
-        )
-
         self.dropout = nn.Dropout(
             dropout
         )
@@ -54,7 +49,6 @@ class GPTEmbeddings(nn.Module):
     def forward(
         self,
         input_ids: torch.Tensor,
-        start_pos: int = 0,
     ) -> torch.Tensor:
 
         if input_ids.dim() != 2:
@@ -64,44 +58,13 @@ class GPTEmbeddings(nn.Module):
                 f"but got {tuple(input_ids.shape)}"
             )
 
-        _, seq_len = input_ids.shape
-
-        if start_pos < 0:
-            raise ValueError(
-                "start_pos must be non-negative."
-            )
-
-        if (
-            start_pos + seq_len
-            > self.block_size
-        ):
-            raise ValueError(
-                f"Sequence length exceeds "
-                f"block size ({self.block_size})."
-            )
-
-        positions = torch.arange(
-            start_pos,
-            start_pos + seq_len,
-            device=input_ids.device,
-        )
-
         token_embeddings = (
             self.token_embedding(
                 input_ids
             )
         )
 
-        position_embeddings = (
-            self.position_embedding(
-                positions
-            )
-        )
-
-        x = (
-            token_embeddings
-            + position_embeddings
-        )
+        x = token_embeddings
 
         x = self.dropout(x)
 
