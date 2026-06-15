@@ -142,10 +142,7 @@ class MultiHeadCausalSelfAttention(nn.Module):
 
             present_kv = None
 
-        if (
-            self.use_flash_attention
-            and seq_len > 1
-        ):
+        if self.use_flash_attention:
 
             context = F.scaled_dot_product_attention(
                 queries,
@@ -156,7 +153,13 @@ class MultiHeadCausalSelfAttention(nn.Module):
                     if self.training
                     else 0.0
                 ),
-                is_causal=True,
+                is_causal=(
+                    seq_len > 1
+                    and not isinstance(
+                        past_kv,
+                        KVCache,
+                    )
+                ),
             )
 
         else:
