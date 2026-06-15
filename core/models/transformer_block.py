@@ -73,13 +73,7 @@ class TransformerDecoderBlock(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        past_kv: (
-            tuple[
-                torch.Tensor,
-                torch.Tensor,
-            ]
-            | None
-        ) = None,
+        past_kv=None,
         use_cache: bool = False,
     ):
 

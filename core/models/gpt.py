@@ -6,6 +6,7 @@ from core.models.normalization import LayerNorm
 from core.models.transformer_block import (
     TransformerDecoderBlock,
 )
+from core.cache.kv_cache import KVCache
 
 
 class GPTModel(nn.Module):
@@ -184,31 +185,61 @@ class GPTModel(nn.Module):
                     f"but got {len(past_kv)}."
                 )
 
-            past_length = (
-                past_kv[0][0].shape[2]
+            past_length = len(
+                past_kv[0]
             )
 
-        total_length = (
-            past_length + seq_len
-        )
-
-        if total_length > self.max_len:
+        if (
+            not use_cache
+            and past_length + seq_len > self.max_len
+        ):
             raise ValueError(
                 f"Sequence length "
-                f"{total_length} exceeds "
+                f"{past_length + seq_len} exceeds "
                 f"block_size {self.max_len}."
             )
 
-        x = self.embeddings(
-            input_ids,
-            start_pos=past_length,
+        start_pos = min(
+            past_length,
+            self.max_len - 1,
         )
 
-        present_kv = (
-            []
-            if use_cache
-            else None
+        x = self.embeddings(
+            input_ids,
+            start_pos=start_pos,
         )
+
+        present_kv = None
+
+        if use_cache:
+
+            if past_kv is None:
+
+                present_kv = []
+
+                for _ in range(
+                    self.num_layers
+                ):
+
+                    present_kv.append(
+                        KVCache(
+                            batch_size=input_ids.size(0),
+                            num_heads=self.num_heads,
+                            head_dim=(
+                                self.d_model
+                                // self.num_heads
+                            ),
+                            max_seq_len=self.max_len,
+                            device=input_ids.device,
+                            dtype=next(
+                                self.parameters()
+                            ).dtype,
+                        )
+                    )
+
+            else:
+
+                present_kv = past_kv
 
         for idx, block in enumerate(
             self.blocks
@@ -216,20 +247,16 @@ class GPTModel(nn.Module):
 
             layer_past = (
                 None
-                if past_kv is None
-                else past_kv[idx]
+                if present_kv is None
+                else present_kv[idx]
             )
 
             if use_cache:
 
-                x, layer_present = block(
+                x, _ = block(
                     x,
                     past_kv=layer_past,
                     use_cache=True,
-                )
-
-                present_kv.append(
-                    layer_present
                 )
 
             else:

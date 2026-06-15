@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from core.cache.kv_cache import KVCache
 
 
 class MultiHeadCausalSelfAttention(nn.Module):
@@ -110,30 +111,40 @@ class MultiHeadCausalSelfAttention(nn.Module):
 
         past_length = 0
 
-        if past_kv is not None:
+        if isinstance(
+            past_kv,
+            KVCache,
+        ):
 
-            past_keys, past_values = past_kv
-
-            past_length = past_keys.size(2)
-
-            keys = torch.cat(
-                [past_keys, keys],
-                dim=2,
+            past_length = len(
+                past_kv
             )
 
-            values = torch.cat(
-                [past_values, values],
-                dim=2,
+            past_kv.append(
+                keys,
+                values,
             )
 
-        present_kv = (
-            keys,
-            values,
-        ) if use_cache else None
+            keys = past_kv.get_keys()
+
+            values = past_kv.get_values()
+
+            present_kv = past_kv
+
+        elif use_cache:
+
+            raise ValueError(
+                "KVCache expected when "
+                "use_cache=True"
+            )
+
+        else:
+
+            present_kv = None
 
         if (
             self.use_flash_attention
-            and past_kv is None
+            and seq_len > 1
         ):
 
             context = F.scaled_dot_product_attention(
@@ -159,13 +170,11 @@ class MultiHeadCausalSelfAttention(nn.Module):
                 self.head_dim
             )
 
-            total_length = (
-                past_length + seq_len
-            )
+            total_length = keys.size(2)
 
             query_positions = torch.arange(
                 past_length,
-                total_length,
+                past_length + seq_len,
                 device=x.device,
             ).unsqueeze(-1)
 

@@ -64,6 +64,9 @@ def generate_tokens(
 
     model.eval()
 
+    if max_new_tokens <= 0:
+        return input_ids
+
     logits, past_kv = model(
         input_ids,
         use_cache=True,
@@ -79,9 +82,7 @@ def generate_tokens(
         next_token,
     ]
 
-    current_token = (
-        next_token
-    )
+    current_token = next_token
 
     for _ in range(
         max_new_tokens - 1
@@ -105,9 +106,7 @@ def generate_tokens(
             next_token
         )
 
-        current_token = (
-            next_token
-        )
+        current_token = next_token
 
     generated_tokens = torch.cat(
         generated_tokens,
@@ -134,6 +133,9 @@ def generate_tokens_stream(
 
     model.eval()
 
+    if max_new_tokens <= 0:
+        return
+
     logits, past_kv = model(
         input_ids,
         use_cache=True,
@@ -147,9 +149,7 @@ def generate_tokens_stream(
 
     yield next_token.item()
 
-    current_token = (
-        next_token
-    )
+    current_token = next_token
 
     for _ in range(
         max_new_tokens - 1
@@ -171,6 +171,4 @@ def generate_tokens_stream(
 
         yield next_token.item()
 
-        current_token = (
-            next_token
-        )
+        current_token = next_token
