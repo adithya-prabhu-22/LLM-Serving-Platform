@@ -20,6 +20,8 @@ class GPTConfig:
 
     use_flash_attention: bool = False
 
+    cache_type: str = "sliding"
+
     temperature: float = 1.0
     top_k: int = 50
 
@@ -81,6 +83,15 @@ class GPTConfig:
         if self.top_k <= 0:
             raise ValueError(
                 "top_k must be positive."
+            )
+
+        if self.cache_type not in (
+            "sliding",
+            "ring",
+        ):
+            raise ValueError(
+                "cache_type must be one of "
+                "'sliding' or 'ring'."
             )
 
         if self.ff_dim is None:

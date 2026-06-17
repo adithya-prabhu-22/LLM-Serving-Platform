@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from core.cache.kv_cache import KVCache
+from core.cache.ring_kv_cache import (
+    RingKVCache,
+)
 from core.models.rope import (
     RotaryEmbedding,
     apply_rotary_pos_emb,
@@ -123,8 +126,18 @@ class MultiHeadCausalSelfAttention(nn.Module):
 
         if isinstance(
             past_kv,
+            RingKVCache,
+        ):
+
+            past_length = (
+                past_kv.get_total_tokens_seen()
+            )
+
+        elif isinstance(
+            past_kv,
             KVCache,
         ):
+
             past_length = len(
                 past_kv
             )
@@ -136,18 +149,14 @@ class MultiHeadCausalSelfAttention(nn.Module):
         else:
 
             raise ValueError(
-                "Unsupported cache type."
+                "Unsupported cache type. "
+                "Expected KVCache or RingKVCache."
             )
 
         positions = torch.arange(
             past_length,
             past_length + seq_len,
             device=x.device,
-        )
-
-        positions = torch.clamp(
-            positions,
-            max=8191,
         )
 
         cos, sin = self.rotary_emb(
@@ -163,7 +172,10 @@ class MultiHeadCausalSelfAttention(nn.Module):
 
         if isinstance(
             past_kv,
-            KVCache,
+            (
+                KVCache,
+                RingKVCache,
+            ),
         ):
 
             past_kv.append(
@@ -192,7 +204,10 @@ class MultiHeadCausalSelfAttention(nn.Module):
                     seq_len > 1
                     and not isinstance(
                         past_kv,
-                        KVCache,
+                        (
+                            KVCache,
+                            RingKVCache,
+                        ),
                     )
                 ),
             )

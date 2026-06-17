@@ -7,6 +7,9 @@ from core.models.transformer_block import (
     TransformerDecoderBlock,
 )
 from core.cache.kv_cache import KVCache
+from core.cache.ring_kv_cache import (
+    RingKVCache,
+)
 
 
 class GPTModel(nn.Module):
@@ -57,6 +60,19 @@ class GPTModel(nn.Module):
         self.num_layers = (
             config.num_layers
         )
+
+        self.cache_type = (
+            config.cache_type
+        )
+
+        if self.cache_type not in (
+            "sliding",
+            "ring",
+        ):
+            raise ValueError(
+                f"Unsupported cache_type: "
+                f"{self.cache_type}"
+            )
 
         self.embeddings = GPTEmbeddings(
             vocab_size=config.vocab_size,
@@ -215,8 +231,9 @@ class GPTModel(nn.Module):
                     self.num_layers
                 ):
 
-                    present_kv.append(
-                        KVCache(
+                    if self.cache_type == "sliding":
+
+                        cache = KVCache(
                             batch_size=input_ids.size(0),
                             num_heads=self.num_heads,
                             head_dim=(
@@ -229,6 +246,32 @@ class GPTModel(nn.Module):
                                 self.parameters()
                             ).dtype,
                         )
+
+                    elif self.cache_type == "ring":
+
+                        cache = RingKVCache(
+                            batch_size=input_ids.size(0),
+                            num_heads=self.num_heads,
+                            head_dim=(
+                                self.d_model
+                                // self.num_heads
+                            ),
+                            max_seq_len=self.max_len,
+                            device=input_ids.device,
+                            dtype=next(
+                                self.parameters()
+                            ).dtype,
+                        )
+
+                    else:
+
+                        raise ValueError(
+                            f"Unsupported cache_type: "
+                            f"{self.cache_type}"
+                        )
+
+                    present_kv.append(
+                        cache
                     )
 
             else:

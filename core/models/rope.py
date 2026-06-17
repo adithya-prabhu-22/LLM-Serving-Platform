@@ -58,10 +58,12 @@ class RotaryEmbedding(nn.Module):
     def __init__(
         self,
         dim: int,
-        max_seq_len: int,
+        max_seq_len: int = 8192,
         base: float = 10000.0,
     ):
         super().__init__()
+
+        self.dim = dim
 
         inv_freq = 1.0 / (
             base
@@ -76,25 +78,9 @@ class RotaryEmbedding(nn.Module):
             )
         )
 
-        positions = torch.arange(
-            max_seq_len,
-            dtype=torch.float32,
-        )
-
-        freqs = torch.outer(
-            positions,
+        self.register_buffer(
+            "inv_freq",
             inv_freq,
-        )
-
-        self.register_buffer(
-            "cos_cached",
-            torch.cos(freqs),
-            persistent=False,
-        )
-
-        self.register_buffer(
-            "sin_cached",
-            torch.sin(freqs),
             persistent=False,
         )
 
@@ -103,7 +89,15 @@ class RotaryEmbedding(nn.Module):
         positions: torch.Tensor,
     ):
 
-        return (
-            self.cos_cached[positions],
-            self.sin_cached[positions],
+        positions = positions.float()
+
+        freqs = torch.outer(
+            positions,
+            self.inv_freq,
         )
+
+        cos = torch.cos(freqs)
+
+        sin = torch.sin(freqs)
+
+        return cos, sin
