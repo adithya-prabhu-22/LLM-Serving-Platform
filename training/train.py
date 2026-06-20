@@ -1,305 +1,175 @@
+import argparse
 import json
+import math
+import shutil
+from functools import partial
 from pathlib import Path
 
 import torch
+from torch.amp import GradScaler
 from torch.optim import AdamW
-from torch.utils.data import DataLoader, random_split
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.utils.data import DataLoader
 
 from core.config.gpt_config import GPTConfig
 from core.models.gpt import GPTModel
-
-from training.dataset import TextChunkDataset
-from training.loss import GPTLoss
-from training.evaluate import evaluate
-
-from training.utils.save_safetensor import (
-    save_safetensor_checkpoint,
-)
-
-from training.utils.checkpoint import (
-    save_config,
-)
+from training.datasets.text_dataset import TextDataset
+from training.datasets.collate import collate_batch
+from training.trainer.training_loop import train_one_epoch
+from training.utils.tokenizer import TOKENIZER
+from training.utils.seed import set_seed
+from training.utils.checkpoint import load_checkpoint, latest_checkpoint
+from training.utils.safetensor import save_safetensor
 
 
-DATA_DIR = (
-    "/content/drive/MyDrive/"
-    "exp_02b_custom_bpe/text_chunks"
-)
-
-OUTPUT_DIR = (
-    "/content/drive/MyDrive/"
-    "GPT2_35M"
-)
-
-CONFIG_PATH = (
-    "training/configs/gpt_35m.json"
-)
+def load_config(config_path: str):
+    with open(config_path, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
-def load_config():
+def build_model(model_config):
+    config_vocab_size = model_config.get("vocab_size", TOKENIZER.n_vocab)
+    if config_vocab_size != TOKENIZER.n_vocab:
+        print(f"Warning: config vocab_size={config_vocab_size} but tokenizer vocab_size={TOKENIZER.n_vocab}")
 
-    with open(
-        CONFIG_PATH,
-        "r",
-        encoding="utf-8",
-    ) as file:
-
-        config_dict = json.load(
-            file
-        )
-
-    return GPTConfig(
-        **config_dict
+    config = GPTConfig(
+        vocab_size=TOKENIZER.n_vocab,
+        block_size=model_config["block_size"],
+        d_model=model_config["d_model"],
+        num_heads=model_config["num_heads"],
+        num_layers=model_config["num_layers"],
+        dropout=model_config.get("dropout", 0.1),
+        ff_dim=model_config.get("ff_dim"),
+        activation=model_config.get("activation", "gelu"),
+        qkv_bias=model_config.get("qkv_bias", False),
+        use_flash_attention=model_config.get("use_flash_attention", False),
+        cache_type=model_config.get("cache_type", "ring"),
     )
-
-
-def count_parameters(
-    model,
-):
-
-    return sum(
-        p.numel()
-        for p in model.parameters()
-    )
+    return GPTModel(config)
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", required=True)
+    args = parser.parse_args()
 
-    config = load_config()
+    config = load_config(args.config)
 
-    output_dir = Path(
-        OUTPUT_DIR
+    set_seed(config["training"].get("seed", 42))
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {device}")
+    if device == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+
+    model = build_model(config["model"])
+    model.to(device)
+    print(f"Parameters: {model.num_parameters():,}")
+
+    train_dataset = TextDataset(
+        dataset_dir=config["paths"]["train_dir"],
+        tokenizer=TOKENIZER,
+        block_size=config["model"]["block_size"],
     )
-
-    checkpoint_dir = (
-        output_dir
-        / "checkpoints"
+    val_dataset = TextDataset(
+        dataset_dir=config["paths"]["val_dir"],
+        tokenizer=TOKENIZER,
+        block_size=config["model"]["block_size"],
     )
+    print(f"Train examples: {len(train_dataset):,}")
+    print(f"Validation examples: {len(val_dataset):,}")
 
-    checkpoint_dir.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    save_config(
-        config,
-        output_dir
-        / "config.json",
-    )
-
-    device = torch.device(
-        "cuda"
-        if torch.cuda.is_available()
-        else "cpu"
-    )
-
-    print(
-        f"Using device: {device}"
-    )
-
-    dataset = TextChunkDataset(
-        data_dir=DATA_DIR,
-        block_size=config.block_size,
-        stride=256,
-        max_files=5,
-    )
-
-    print(
-        f"Dataset Samples: "
-        f"{len(dataset):,}"
-    )
-
-    train_size = int(
-        0.9 * len(dataset)
-    )
-
-    val_size = (
-        len(dataset)
-        - train_size
-    )
-
-    train_dataset, val_dataset = (
-        random_split(
-            dataset,
-            [
-                train_size,
-                val_size,
-            ],
-        )
-    )
-
-    print(
-        f"Train Samples: "
-        f"{len(train_dataset):,}"
-    )
-
-    print(
-        f"Validation Samples: "
-        f"{len(val_dataset):,}"
-    )
-
-    train_loader = DataLoader(
+    train_dataloader = DataLoader(
         train_dataset,
-        batch_size=8,
+        batch_size=config["training"]["batch_size"],
         shuffle=True,
-        num_workers=2,
-        pin_memory=True,
+        collate_fn=partial(collate_batch, pad_token_id=0),
+        num_workers=config["training"].get("num_workers", 4),
+        pin_memory=(device == "cuda"),
     )
-
-    val_loader = DataLoader(
+    val_dataloader = DataLoader(
         val_dataset,
-        batch_size=8,
+        batch_size=config["training"]["batch_size"],
         shuffle=False,
-        num_workers=2,
-        pin_memory=True,
+        collate_fn=partial(collate_batch, pad_token_id=0),
+        num_workers=config["training"].get("num_workers", 4),
+        pin_memory=(device == "cuda"),
     )
-
-    model = GPTModel(
-        config
-    ).to(device)
-
-    print(
-        f"Parameters: "
-        f"{count_parameters(model):,}"
-    )
+    print(f"Train batches: {len(train_dataloader):,}")
+    print(f"Validation batches: {len(val_dataloader):,}")
 
     optimizer = AdamW(
         model.parameters(),
-        lr=3e-4,
-        weight_decay=0.1,
+        lr=config["training"]["learning_rate"],
+        weight_decay=config["training"]["weight_decay"],
     )
 
-    criterion = GPTLoss()
+    grad_accum = config["training"].get("gradient_accumulation_steps", 1)
+    steps_per_epoch = math.ceil(len(train_dataloader) / grad_accum)
+    total_steps = steps_per_epoch * config["training"]["epochs"]
+    scheduler = CosineAnnealingLR(optimizer, T_max=total_steps)
 
-    scaler = (
-        torch.cuda.amp.GradScaler(
-            enabled=torch.cuda.is_available()
+    scaler = GradScaler("cuda", enabled=(device == "cuda"))
+
+    checkpoint_dir = config["paths"]["checkpoint_dir"]
+    Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+
+    output_dir = Path(config["paths"]["output_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    latest_ckpt = latest_checkpoint(checkpoint_dir)
+
+    start_epoch = 0
+    global_step = 0
+    best_val_loss = float("inf")
+
+    if latest_ckpt:
+        print(f"Resuming from {latest_ckpt}")
+        state = load_checkpoint(
+            checkpoint_path=latest_ckpt,
+            model=model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            scaler=scaler,
+            map_location=device,
         )
-    )
+        start_epoch = state["epoch"]
+        global_step = state["step"]
+        best_val_loss = state["best_val_loss"]
 
-    num_epochs = 3
-
-    best_val_loss = float(
-        "inf"
-    )
-
-    for epoch in range(
-        num_epochs
-    ):
-
-        model.train()
-
-        total_loss = 0.0
-
-        for step, (
-            input_ids,
-            targets,
-        ) in enumerate(
-            train_loader
-        ):
-
-            input_ids = (
-                input_ids.to(device)
-            )
-
-            targets = (
-                targets.to(device)
-            )
-
-            optimizer.zero_grad()
-
-            with torch.cuda.amp.autocast(
-                enabled=torch.cuda.is_available()
-            ):
-
-                logits = model(
-                    input_ids
-                )
-
-                loss = criterion(
-                    logits,
-                    targets,
-                )
-
-            scaler.scale(
-                loss
-            ).backward()
-
-            scaler.step(
-                optimizer
-            )
-
-            scaler.update()
-
-            total_loss += (
-                loss.item()
-            )
-
-            if step % 10 == 0:
-
-                print(
-                    f"Epoch "
-                    f"{epoch + 1} "
-                    f"Step "
-                    f"{step} "
-                    f"Loss "
-                    f"{loss.item():.4f}"
-                )
-
-        train_loss = (
-            total_loss
-            / len(train_loader)
+    for epoch in range(start_epoch, config["training"]["epochs"]):
+        print(f"\nStarting Epoch {epoch + 1}")
+        global_step, best_val_loss = train_one_epoch(
+            model=model,
+            dataloader=train_dataloader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            device=device,
+            epoch=epoch + 1,
+            global_step=global_step,
+            eval_dataloader=val_dataloader,
+            eval_interval=config["training"]["eval_interval"],
+            save_interval=config["training"]["save_interval"],
+            checkpoint_dir=config["paths"]["checkpoint_dir"],
+            output_dir=str(output_dir),
+            max_grad_norm=config["training"]["max_grad_norm"],
+            best_val_loss=best_val_loss,
+            gradient_accumulation_steps=config["training"].get("gradient_accumulation_steps", 1),
+            scaler=scaler,
         )
 
-        val_loss, perplexity = (
-            evaluate(
-                model,
-                val_loader,
-                criterion,
-                device,
-            )
-        )
+    final_model_path = f"{output_dir}/model.safetensors"
+    save_safetensor(model, final_model_path)
 
-        print(
-            f"\nEpoch {epoch + 1}\n"
-            f"Train Loss: "
-            f"{train_loss:.4f}\n"
-            f"Validation Loss: "
-            f"{val_loss:.4f}\n"
-            f"Perplexity: "
-            f"{perplexity:.4f}\n"
-        )
+    best_model_path = output_dir / "best_model.safetensors"
+    if not best_model_path.exists():
+        save_safetensor(model, str(best_model_path))
 
-        save_safetensor_checkpoint(
-            model,
-            checkpoint_dir
-            / "latest.safetensors",
-        )
+    shutil.copy(args.config, f"{output_dir}/config.json")
 
-        if (
-            val_loss
-            < best_val_loss
-        ):
-
-            best_val_loss = (
-                val_loss
-            )
-
-            save_safetensor_checkpoint(
-                model,
-                checkpoint_dir
-                / "best.safetensors",
-            )
-
-            print(
-                "New best model saved."
-            )
-
-    print(
-        "\nTraining Complete"
-    )
+    print("\nTraining complete.")
+    print(f"Saved model: {final_model_path}")
 
 
 if __name__ == "__main__":
-
     main()

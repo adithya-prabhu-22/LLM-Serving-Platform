@@ -1,21 +1,32 @@
 {
+  "model": {
     "vocab_size": 50257,
-
     "block_size": 1024,
-
     "d_model": 384,
-
     "num_heads": 6,
-
     "num_layers": 8,
-
-    "ff_dim": 1536,
-
-    "activation": "gelu",
-
     "dropout": 0.1,
-
+    "ff_dim": 1536,
+    "activation": "gelu",
     "qkv_bias": false,
-
-    "use_flash_attention": true
+    "use_flash_attention": true,
+    "cache_type": "ring"
+  },
+  "training": {
+    "batch_size": 8,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.01,
+    "epochs": 10,
+    "eval_interval": 500,
+    "save_interval": 1000,
+    "max_grad_norm": 1.0,
+    "seed": 42
+  },
+  "paths": {
+    "train_dir": "data/train",
+    "val_dir": "data/val",
+    "checkpoint_dir": "storage/checkpoints",
+    "output_dir": "storage/deployed_models/gpt_35m"
+  }
 }
