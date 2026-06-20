@@ -1,100 +1,50 @@
 from dataclasses import dataclass
 
-
 @dataclass
 class GPTConfig:
-
     vocab_size: int
     block_size: int
-
     d_model: int
     num_heads: int
     num_layers: int
-
     dropout: float = 0.1
-
     ff_dim: int | None = None
     activation: str = "gelu"
-
     qkv_bias: bool = False
-
     use_flash_attention: bool = False
-
     cache_type: str = "sliding"
-
     temperature: float = 1.0
     top_k: int = 50
 
     def __post_init__(self):
-
         if self.vocab_size <= 0:
-            raise ValueError(
-                "vocab_size must be positive."
-            )
-
+            raise ValueError("vocab_size must be positive.")
         if self.block_size <= 0:
-            raise ValueError(
-                "block_size must be positive."
-            )
-
+            raise ValueError("block_size must be positive.")
         if self.d_model <= 0:
-            raise ValueError(
-                "d_model must be positive."
-            )
-
+            raise ValueError("d_model must be positive.")
         if self.num_heads <= 0:
-            raise ValueError(
-                "num_heads must be positive."
-            )
-
+            raise ValueError("num_heads must be positive.")
         if self.num_layers <= 0:
-            raise ValueError(
-                "num_layers must be positive."
-            )
-
+            raise ValueError("num_layers must be positive.")
         if self.d_model % self.num_heads != 0:
-            raise ValueError(
-                "d_model must be divisible by num_heads."
-            )
-
+            raise ValueError("d_model must be divisible by num_heads.")
         if not 0.0 <= self.dropout < 1.0:
-            raise ValueError(
-                "dropout must be in the range [0.0, 1.0)."
-            )
-
-        if (
-            self.ff_dim is not None
-            and self.ff_dim <= 0
-        ):
-            raise ValueError(
-                "ff_dim must be positive."
-            )
-
-        if not self.activation.strip():
-            raise ValueError(
-                "activation cannot be empty."
-            )
-
+            raise ValueError("dropout must be in the range [0.0, 1.0).")
+        if self.ff_dim is not None and self.ff_dim <= 0:
+            raise ValueError("ff_dim must be positive.")
+        if not isinstance(self.activation, str) or not self.activation.strip():
+            raise ValueError("activation cannot be empty.")
+        valid_activations = {"relu", "gelu", "silu", "tanh"}
+        if self.activation.lower() not in valid_activations:
+            raise ValueError(f"Unsupported activation: {self.activation}")
         if self.temperature <= 0:
-            raise ValueError(
-                "temperature must be positive."
-            )
-
+            raise ValueError("temperature must be positive.")
         if self.top_k <= 0:
-            raise ValueError(
-                "top_k must be positive."
-            )
-
-        if self.cache_type not in (
-            "sliding",
-            "ring",
-        ):
-            raise ValueError(
-                "cache_type must be one of "
-                "'sliding' or 'ring'."
-            )
-
+            raise ValueError("top_k must be positive.")
+        if self.top_k > self.vocab_size:
+            raise ValueError("top_k cannot exceed vocab_size.")
+        if self.cache_type not in ("sliding", "ring"):
+            raise ValueError("cache_type must be one of 'sliding' or 'ring'.")
         if self.ff_dim is None:
-            self.ff_dim = (
-                4 * self.d_model
-            )
+            self.ff_dim = 4 * self.d_model
