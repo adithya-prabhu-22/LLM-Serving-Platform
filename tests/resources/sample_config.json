@@ -8,5 +8,6 @@
     "ff_dim": 2048,
     "activation": "gelu",
     "qkv_bias": false,
-    "use_flash_attention": true
+    "use_flash_attention": true,
+    "cache_type": "ring"
 }

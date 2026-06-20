@@ -1,208 +1,78 @@
 import json
 from pathlib import Path
 
-
-REGISTRY_PATH = Path(
-    "storage/registry/models.json"
-)
-
-
-STATUS_VALUES = {
-    "REGISTERED",
-    "LOADING",
-    "READY",
-    "FAILED",
-}
-
+REGISTRY_PATH = Path("storage/registry/models.json")
+STATUS_VALUES = {"REGISTERED", "LOADING", "READY", "FAILED"}
 
 def _initialize_registry():
-
-    REGISTRY_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
+    REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not REGISTRY_PATH.exists():
-
-        with open(
-            REGISTRY_PATH,
-            "w",
-            encoding="utf-8",
-        ) as file:
-
-            json.dump(
-                [],
-                file,
-                indent=4,
-            )
-
+        with open(REGISTRY_PATH, "w", encoding="utf-8") as file:
+            json.dump([], file, indent=4)
 
 def _load_registry() -> list[dict]:
-
     _initialize_registry()
+    try:
+        with open(REGISTRY_PATH, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        if not isinstance(data, list):
+            raise ValueError("Registry must contain a list.")
+        return data
+    except (json.JSONDecodeError, ValueError):
+        _save_registry([])
+        return []
 
-    with open(
-        REGISTRY_PATH,
-        "r",
-        encoding="utf-8",
-    ) as file:
+def _save_registry(registry_data: list[dict]):
+    with open(REGISTRY_PATH, "w", encoding="utf-8") as file:
+        json.dump(registry_data, file, indent=4)
 
-        return json.load(file)
-
-
-def _save_registry(
-    registry_data: list[dict],
-):
-
-    with open(
-        REGISTRY_PATH,
-        "w",
-        encoding="utf-8",
-    ) as file:
-
-        json.dump(
-            registry_data,
-            file,
-            indent=4,
-        )
-
-
-def register_model(
-    model_id: str,
-    name: str,
-    architecture: str,
-    config_path: str,
-    weights_path: str,
-):
-
+def register_model(model_id: str, name: str, architecture: str, config_path: str, weights_path: str):
     registry = _load_registry()
-
     for model in registry:
-
         if model["model_id"] == model_id:
+            raise ValueError(f"Model '{model_id}' already exists.")
+    registry.append({
+        "model_id": model_id,
+        "name": name,
+        "architecture": architecture,
+        "status": "REGISTERED",
+        "config_path": config_path,
+        "weights_path": weights_path,
+    })
+    _save_registry(registry)
 
-            raise ValueError(
-                f"Model '{model_id}' already exists."
-            )
-
-    registry.append(
-        {
-            "model_id": model_id,
-            "name": name,
-            "architecture": architecture,
-            "status": "REGISTERED",
-            "config_path": config_path,
-            "weights_path": weights_path,
-        }
-    )
-
-    _save_registry(
-        registry
-    )
-
-
-def get_model(
-    model_id: str,
-) -> dict:
-
+def get_model(model_id: str) -> dict:
     registry = _load_registry()
-
     for model in registry:
-
         if model["model_id"] == model_id:
-
             return model
-
-    raise ValueError(
-        f"Model '{model_id}' not found."
-    )
-
+    raise ValueError(f"Model '{model_id}' not found.")
 
 def list_models() -> list[dict]:
-
     return _load_registry()
 
-
-def update_model_status(
-    model_id: str,
-    status: str,
-):
-
+def update_model_status(model_id: str, status: str):
     if status not in STATUS_VALUES:
-
-        raise ValueError(
-            f"Invalid status: {status}"
-        )
-
+        raise ValueError(f"Invalid status: {status}")
     registry = _load_registry()
-
     for model in registry:
-
         if model["model_id"] == model_id:
-
             model["status"] = status
-
-            _save_registry(
-                registry
-            )
-
+            _save_registry(registry)
             return
+    raise ValueError(f"Model '{model_id}' not found.")
 
-    raise ValueError(
-        f"Model '{model_id}' not found."
-    )
-
-
-def delete_model(
-    model_id: str,
-):
-
+def delete_model(model_id: str):
     registry = _load_registry()
+    updated_registry = [model for model in registry if model["model_id"] != model_id]
+    if len(updated_registry) == len(registry):
+        raise ValueError(f"Model '{model_id}' not found.")
+    _save_registry(updated_registry)
 
-    updated_registry = [
-        model
-        for model in registry
-        if model["model_id"] != model_id
-    ]
+def is_model_ready(model_id: str) -> bool:
+    model = get_model(model_id)
+    return model["status"] == "READY"
 
-    if len(
-        updated_registry
-    ) == len(
-        registry
-    ):
-
-        raise ValueError(
-            f"Model '{model_id}' not found."
-        )
-
-    _save_registry(
-        updated_registry
-    )
-
-
-def is_model_ready(
-    model_id: str,
-) -> bool:
-
-    model = get_model(
-        model_id
-    )
-
-    return (
-        model["status"]
-        == "READY"
-    )
-
-
-def is_model_registered(
-    model_id: str,
-) -> bool:
-
-    model = get_model(
-        model_id
-    )
-
-    return (
-        model["status"]
-        == "REGISTERED"
-    )
+def is_model_registered(model_id: str) -> bool:
+    model = get_model(model_id)
+    return model["status"] == "REGISTERED"

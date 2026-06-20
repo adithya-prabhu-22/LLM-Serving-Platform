@@ -8,5 +8,8 @@
     "ff_dim": 256,
     "activation": "gelu",
     "qkv_bias": false,
-    "use_flash_attention": false
+    "use_flash_attention": false,
+    "cache_type": "ring",
+    "temperature": 1.0,
+    "top_k": 50
 }
