@@ -12,7 +12,7 @@ storage/logs/*
 tests
 
 training
-
+tests/resources/**/*.safetensors
 docs
 
 README.md
