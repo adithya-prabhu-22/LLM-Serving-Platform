@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class GPTConfig:
     vocab_size: int
@@ -15,6 +16,9 @@ class GPTConfig:
     cache_type: str = "sliding"
     temperature: float = 1.0
     top_k: int = 50
+    batch_size: int = 8
+    learning_rate: float = 3e-4
+    weight_decay: float = 0.01
 
     def __post_init__(self):
         if self.vocab_size <= 0:
@@ -46,5 +50,11 @@ class GPTConfig:
             raise ValueError("top_k cannot exceed vocab_size.")
         if self.cache_type not in ("sliding", "ring"):
             raise ValueError("cache_type must be one of 'sliding' or 'ring'.")
+        if self.batch_size <= 0:
+            raise ValueError("batch_size must be positive.")
+        if self.learning_rate <= 0:
+            raise ValueError("learning_rate must be positive.")
+        if self.weight_decay < 0:
+            raise ValueError("weight_decay cannot be negative.")
         if self.ff_dim is None:
             self.ff_dim = 4 * self.d_model
