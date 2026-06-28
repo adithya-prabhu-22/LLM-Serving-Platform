@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 REQUIRED_FIELDS = (
     "dataset",
     "tokenizer",
@@ -31,5 +30,7 @@ def load_manifest(manifest_path: str):
 
     if len(manifest["chunks"]) == 0:
         raise ValueError("Manifest contains no chunks.")
+
+    manifest["chunks"] = sorted(manifest["chunks"])
 
     return manifest

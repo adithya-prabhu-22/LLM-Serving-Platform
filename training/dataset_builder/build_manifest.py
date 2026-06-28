@@ -1,5 +1,6 @@
 import json
 import argparse
+from pathlib import Path
 
 import boto3
 
@@ -15,17 +16,20 @@ def build_manifest(
     paginator = s3_client.get_paginator("list_objects_v2")
 
     chunks = []
+    total_tokens = 0
     for page in paginator.paginate(Bucket=bucket_name, Prefix=f"{dataset_type}/"):
         for obj in page.get("Contents", []):
             key = obj["Key"]
             if not key.endswith(".bin"):
                 continue
             chunks.append(key)
+            total_tokens += obj["Size"] // 2
 
     chunks.sort()
-
     total_chunks = len(chunks)
-    total_tokens = total_chunks * chunk_size
+
+    if total_chunks == 0:
+        raise ValueError(f"No chunks found under prefix {dataset_type}/ in bucket {bucket_name}")
 
     manifest = {
         "dataset": dataset_type,
@@ -37,8 +41,8 @@ def build_manifest(
         "chunks": chunks,
     }
 
-    manifest_key = f"manifests/{dataset_type}_manifest.json"
-
+    sanitized_prefix = dataset_type.replace("/", "_")
+    manifest_key = f"manifests/{sanitized_prefix}_manifest.json"
     s3_client.put_object(
         Bucket=bucket_name,
         Key=manifest_key,
@@ -46,11 +50,18 @@ def build_manifest(
         ContentType="application/json",
     )
 
+    local_dir = Path("storage/dataset_build")
+    local_dir.mkdir(parents=True, exist_ok=True)
+    local_path = local_dir / f"{sanitized_prefix}_manifest.json"
+    with open(local_path, "w") as f:
+        json.dump(manifest, f, indent=4)
+
     print("\n===== MANIFEST CREATED =====")
     print(f"Dataset      : {dataset_type}")
     print(f"Chunks       : {total_chunks:,}")
     print(f"Total Tokens : {total_tokens:,}")
     print(f"Uploaded     : s3://{bucket_name}/{manifest_key}")
+    print(f"Local copy   : {local_path}")
 
     return manifest
 

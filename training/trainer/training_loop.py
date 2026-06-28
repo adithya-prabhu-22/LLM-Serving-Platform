@@ -26,11 +26,13 @@ def train_one_epoch(
     logging_steps=50,
 ):
     if scaler is None:
-        raise ValueError("GradScaler must be provided. Create it once in train.py and pass it in.")
+        raise ValueError("GradScaler must be provided.")
 
     model.train()
     running_loss = 0.0
     logged_microbatches = 0
+    total_loss = 0.0
+    total_microbatches = 0
     start_time = time.time()
 
     use_cuda = torch.cuda.is_available() and str(device).startswith("cuda")
@@ -58,7 +60,9 @@ def train_one_epoch(
         scaler.scale(loss).backward()
 
         running_loss += raw_loss.item()
+        total_loss += raw_loss.item()
         logged_microbatches += 1
+        total_microbatches += 1
 
         if (batch_idx + 1) % gradient_accumulation_steps == 0 or (batch_idx + 1 == total_batches):
             scaler.unscale_(optimizer)
@@ -146,4 +150,5 @@ def train_one_epoch(
                     )
                     print(f"Safetensor exported at step {global_step}")
 
-    return global_step, best_val_loss
+    avg_loss_over_epoch = total_loss / total_microbatches if total_microbatches > 0 else 0.0
+    return global_step, best_val_loss, avg_loss_over_epoch

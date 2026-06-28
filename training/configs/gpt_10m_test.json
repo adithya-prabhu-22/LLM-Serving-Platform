@@ -1,0 +1,33 @@
+{
+  "model": {
+    "block_size": 256,
+    "d_model": 256,
+    "num_heads": 4,
+    "num_layers": 4,
+    "dropout": 0.1,
+    "ff_dim": 512,
+    "activation": "gelu",
+    "qkv_bias": false,
+    "use_flash_attention": false,
+    "cache_type": "ring"
+  },
+  "training": {
+    "batch_size": 1,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 3e-4,
+    "weight_decay": 0.01,
+    "epochs": 1,
+    "eval_interval": 5,
+    "save_interval": 1000000,
+    "max_grad_norm": 1.0,
+    "num_workers": 0,
+    "seed": 42
+  },
+  "paths": {
+    "checkpoint_dir": "storage/checkpoints_streaming",
+    "output_dir": "storage/output"
+  },
+  "dataset": {
+    "manifest": "storage/dataset_build/general_test_manifest.json"
+  }
+}

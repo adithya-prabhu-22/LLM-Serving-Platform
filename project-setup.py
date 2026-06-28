@@ -5,6 +5,7 @@ PROJECT_DIRS = [
     "core/cache",
     "core/config",
     "core/models",
+
     "backend",
     "backend/api",
     "backend/api/routes",
@@ -12,6 +13,7 @@ PROJECT_DIRS = [
     "backend/services",
     "backend/services/aws",
     "backend/database",
+
     "frontend",
     "frontend/templates",
     "frontend/static",
@@ -19,20 +21,24 @@ PROJECT_DIRS = [
     "frontend/static/js",
     "frontend/static/js/pages",
     "frontend/static/js/components",
+
     "storage",
-    "storage/registry",
-    "storage/logs",
-    "storage/uploads",
-    "storage/deployed_models",
     "storage/checkpoints",
+    "storage/checkpoints_streaming",
+    "storage/deployed_models",
     "storage/inference",
+    "storage/logs",
+    "storage/registry",
+    "storage/uploads",
+
     "training",
     "training/configs",
+    "training/dataset_builder",
     "training/datasets",
     "training/datasets/cache",
-    "training/dataset_builder",
     "training/trainer",
     "training/utils",
+
     "infrastructure",
     "infrastructure/docker",
     "infrastructure/docker/backend",
@@ -41,6 +47,7 @@ PROJECT_DIRS = [
     "infrastructure/monitoring/grafana",
     "infrastructure/monitoring/grafana/dashboards",
     "infrastructure/monitoring/grafana/datasources",
+
     "tests",
     "tests/sanity",
     "tests/resources",
@@ -48,146 +55,185 @@ PROJECT_DIRS = [
     "tests/resources/inference_engine",
     "tests/resources/inference_generation",
     "tests/resources/tokenizers",
+
     "docs",
     "requirements",
 ]
 
 PROJECT_FILES = [
+
     "core/__init__.py",
     "core/cache/__init__.py",
     "core/cache/kv_cache.py",
     "core/cache/ring_kv_cache.py",
+
     "core/config/__init__.py",
     "core/config/gpt_config.py",
+
     "core/models/__init__.py",
     "core/models/activations.py",
     "core/models/attention.py",
     "core/models/embeddings.py",
     "core/models/feedforward.py",
-    "core/models/normalization.py",
-    "core/models/transformer_block.py",
-    "core/models/rope.py",
     "core/models/gpt.py",
+    "core/models/normalization.py",
+    "core/models/rope.py",
+    "core/models/transformer_block.py",
+
     "backend/__init__.py",
+
     "backend/api/__init__.py",
     "backend/api/main.py",
+
     "backend/api/routes/__init__.py",
-    "backend/api/routes/root.py",
-    "backend/api/routes/health.py",
     "backend/api/routes/admin.py",
-    "backend/api/routes/models.py",
     "backend/api/routes/generation.py",
+    "backend/api/routes/health.py",
+    "backend/api/routes/models.py",
+    "backend/api/routes/root.py",
+
     "backend/api/schemas/__init__.py",
     "backend/api/schemas/generate_request.py",
     "backend/api/schemas/generate_response.py",
-    "backend/api/schemas/upload_model_response.py",
-    "backend/api/schemas/model_status_response.py",
     "backend/api/schemas/model_info_response.py",
+    "backend/api/schemas/model_status_response.py",
+    "backend/api/schemas/upload_model_response.py",
+
     "backend/services/__init__.py",
-    "backend/services/model_loader.py",
-    "backend/services/tokenizer_service.py",
-    "backend/services/text_generation.py",
     "backend/services/inference_engine.py",
-    "backend/services/registry_service.py",
     "backend/services/lifecycle_manager.py",
+    "backend/services/metrics_service.py",
+    "backend/services/model_loader.py",
+    "backend/services/registry_service.py",
+    "backend/services/text_generation.py",
+    "backend/services/tokenizer_service.py",
     "backend/services/upload_service.py",
     "backend/services/validator.py",
-    "backend/services/metrics_service.py",
+
     "backend/services/aws/__init__.py",
     "backend/services/aws/s3_service.py",
+
     "backend/database/__init__.py",
     "backend/database/db.py",
-    "backend/database/models.py",
     "backend/database/model_registry.py",
+    "backend/database/models.py",
+
     "frontend/templates/index.html",
     "frontend/templates/models.html",
     "frontend/templates/upload.html",
     "frontend/templates/generate.html",
+
     "frontend/static/css/style.css",
+
     "frontend/static/js/app.js",
+
+    "frontend/static/js/components/navbar.js",
+
     "frontend/static/js/pages/dashboard.js",
+    "frontend/static/js/pages/generate.js",
     "frontend/static/js/pages/models.js",
     "frontend/static/js/pages/upload.js",
-    "frontend/static/js/pages/generate.js",
-    "frontend/static/js/components/navbar.js",
-    "storage/registry/models.json",
-    "storage/logs/.gitkeep",
-    "storage/uploads/.gitkeep",
-    "storage/deployed_models/.gitkeep",
-    "storage/checkpoints/.gitkeep",
+
     "training/__init__.py",
+
     "training/train.py",
+    "training/train_streaming.py",
+
     "training/configs/gpt_35m.json",
+
+    "training/dataset_builder/__init__.py",
+    "training/dataset_builder/build_dataset.py",
+    "training/dataset_builder/build_manifest.py",
+
     "training/datasets/__init__.py",
-    "training/datasets/text_dataset.py",
-    "training/datasets/streaming_dataset.py",
+    "training/datasets/cache/__init__.py",
     "training/datasets/chunk_loader.py",
     "training/datasets/collate.py",
-    "training/datasets/cache/__init__.py",
-    "training/dataset_builder/__init__.py",
-    "training/dataset_builder/tokenize_chunk.py",
-    "training/dataset_builder/upload_chunk.py",
-    "training/dataset_builder/build_manifest.py",
-    "training/dataset_builder/verify_dataset.py",
+    "training/datasets/manifest_loader.py",
+    "training/datasets/streaming_dataset.py",
+    "training/datasets/text_dataset.py",
+
     "training/trainer/__init__.py",
-    "training/trainer/loss.py",
     "training/trainer/evaluator.py",
+    "training/trainer/loss.py",
     "training/trainer/training_loop.py",
+
     "training/utils/__init__.py",
     "training/utils/checkpoint.py",
     "training/utils/safetensor.py",
     "training/utils/seed.py",
     "training/utils/tokenizer.py",
+
+    "storage/checkpoints/.gitkeep",
+    "storage/checkpoints_streaming/.gitkeep",
+    "storage/deployed_models/.gitkeep",
+    "storage/inference/.gitkeep",
+    "storage/logs/.gitkeep",
+    "storage/registry/models.json",
+    "storage/uploads/.gitkeep",
+
     "infrastructure/docker/backend/Dockerfile",
     "infrastructure/docker/docker-compose.yml",
+
     "infrastructure/monitoring/prometheus/prometheus.yml",
+
     "infrastructure/monitoring/grafana/dashboards/dashboard.json",
     "infrastructure/monitoring/grafana/datasources/datasource.yml",
-    "docs/architecture.md",
-    "docs/api.md",
-    "docs/deployment.md",
+
     "tests/sanity/run_all.py",
     "tests/sanity/test_activations.py",
     "tests/sanity/test_attention.py",
     "tests/sanity/test_embeddings.py",
     "tests/sanity/test_feedforward.py",
-    "tests/sanity/test_normalization.py",
-    "tests/sanity/test_transformer_block.py",
     "tests/sanity/test_gpt.py",
     "tests/sanity/test_gpt_config.py",
-    "tests/sanity/test_registry_service.py",
+    "tests/sanity/test_inference_engine.py",
+    "tests/sanity/test_inference_generation.py",
+    "tests/sanity/test_lifecycle_manager.py",
     "tests/sanity/test_model_loader.py",
     "tests/sanity/test_model_loader_weights.py",
-    "tests/sanity/test_lifecycle_manager.py",
-    "tests/sanity/test_inference_engine.py",
+    "tests/sanity/test_normalization.py",
+    "tests/sanity/test_registry_service.py",
     "tests/sanity/test_text_generation.py",
-    "tests/sanity/test_inference_generation.py",
+    "tests/sanity/test_transformer_block.py",
+
     "tests/resources/.gitkeep",
     "tests/resources/model_loader/.gitkeep",
     "tests/resources/inference_engine/.gitkeep",
     "tests/resources/inference_generation/.gitkeep",
-    "tests/resources/sample_config.json",
     "tests/resources/tokenizers/.gitkeep",
+    "tests/resources/sample_config.json",
+
+    "docs/api.md",
+    "docs/architecture.md",
+    "docs/deployment.md",
+
     "requirements/base.txt",
     "requirements/dev.txt",
     "requirements/serving.txt",
-    ".gitignore",
+
     ".dockerignore",
     ".env.example",
+    ".gitignore",
     "README.md",
     "pyproject.toml",
 ]
 
+
 def create_project_structure():
     root = Path.cwd()
+
     for directory in PROJECT_DIRS:
         (root / directory).mkdir(parents=True, exist_ok=True)
-    for file_path in PROJECT_FILES:
-        path = root / file_path
+
+    for file in PROJECT_FILES:
+        path = root / file
+        path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
             path.touch()
+
     print("LLM Serving Platform structure created successfully.")
+
 
 if __name__ == "__main__":
     create_project_structure()

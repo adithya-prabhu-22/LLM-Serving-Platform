@@ -1,0 +1,18 @@
+{
+    "dataset": "general_test",
+    "tokenizer": "gpt2",
+    "dtype": "uint16",
+    "chunk_size": 5000,
+    "total_chunks": 8,
+    "total_tokens": 36966,
+    "chunks": [
+        "general_test/chunk_000001.bin",
+        "general_test/chunk_000002.bin",
+        "general_test/chunk_000003.bin",
+        "general_test/chunk_000004.bin",
+        "general_test/chunk_000005.bin",
+        "general_test/chunk_000006.bin",
+        "general_test/chunk_000007.bin",
+        "general_test/chunk_000008.bin"
+    ]
+}
