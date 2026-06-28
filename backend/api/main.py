@@ -4,60 +4,34 @@ from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
 from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import (
-    CORSMiddleware,
-)
+from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routes.health import (
-    get_health,
-)
-
-from backend.api.routes.root import (
-    root,
-)
-
+from backend.api.routes.health import get_health
+from backend.api.routes.root import root
 from backend.api.routes.models import (
     get_models,
     get_model_by_id,
     get_model_status,
     build_model_route,
+    list_s3_models_route,
+    load_s3_model_route,
 )
-
 from backend.api.routes.generation import (
     generate_text,
     generate_text_stream,
 )
-
 from backend.api.routes.admin import (
     upload_model_route,
     delete_model_route,
 )
-
-from backend.api.schemas.generate_request import (
-    GenerateRequest,
-)
-
-from backend.api.schemas.generate_response import (
-    GenerateResponse,
-)
-
-from backend.api.schemas.upload_model_response import (
-    UploadModelResponse,
-)
-
+from backend.api.schemas.generate_request import GenerateRequest
+from backend.api.schemas.generate_response import GenerateResponse
+from backend.api.schemas.upload_model_response import UploadModelResponse
 from backend.services.validator import (
     validate_config_file,
     validate_weights_file,
 )
-
-from fastapi.responses import (
-    StreamingResponse,
-)
-
-from backend.api.routes.metrics import (
-    router as metrics_router,
-)
-
+from backend.api.routes.metrics import router as metrics_router
 
 app = FastAPI(
     title="LLM Serving Platform",
@@ -65,120 +39,73 @@ app = FastAPI(
 )
 
 app.add_middleware(
-
     CORSMiddleware,
-
     allow_origins=["*"],
-
     allow_credentials=True,
-
     allow_methods=["*"],
-
     allow_headers=["*"],
 )
 
 
 @app.get("/")
 def root_route():
-
     return root()
 
 
 @app.get("/models")
 def models():
-
     return get_models()
 
 
-@app.get(
-    "/models/{model_id}"
-)
-def model_by_id(
-    model_id: str,
-):
-
+@app.get("/models/{model_id}")
+def model_by_id(model_id: str):
     try:
-
-        return get_model_by_id(
-            model_id
-        )
-
+        return get_model_by_id(model_id)
     except ValueError as error:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        )
+        raise HTTPException(status_code=404, detail=str(error))
 
 
-@app.get(
-    "/models/status/{model_id}"
-)
-def model_status(
-    model_id: str,
-):
-
+@app.get("/models/status/{model_id}")
+def model_status(model_id: str):
     try:
-
-        return get_model_status(
-            model_id
-        )
-
+        return get_model_status(model_id)
     except ValueError as error:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        )
+        raise HTTPException(status_code=404, detail=str(error))
 
 
-@app.post(
-    "/models/build/{model_id}"
-)
-def build_model(
-    model_id: str,
-):
-
+@app.post("/models/build/{model_id}")
+def build_model(model_id: str):
     try:
-
-        return build_model_route(
-            model_id
-        )
-
+        return build_model_route(model_id)
     except Exception as error:
-
-        print(
-            "\n========== BUILD ERROR =========="
-        )
-
-        print(
-            type(error)
-        )
-
-        print(
-            str(error)
-        )
-
-        print(
-            "=================================\n"
-        )
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        )
+        print("\n========== BUILD ERROR ==========")
+        print(type(error))
+        print(str(error))
+        print("=================================\n")
+        raise HTTPException(status_code=400, detail=str(error))
 
 
-@app.post(
-    "/generate",
-    response_model=GenerateResponse,
-)
-def generate_api(
-    request: GenerateRequest,
-):
-
+@app.get("/models/s3")
+def list_s3_models(bucket: str = "adithya-medical-llm-dataset"):
     try:
+        return list_s3_models_route(bucket)
+    except ValueError as error:
+        raise HTTPException(status_code=500, detail=str(error))
 
+
+@app.post("/models/load/{model_name}")
+def load_s3_model(model_name: str, bucket: str = "adithya-medical-llm-dataset"):
+    try:
+        return load_s3_model_route(model_name, bucket)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+
+@app.post("/generate", response_model=GenerateResponse)
+def generate_api(request: GenerateRequest):
+    try:
         return generate_text(
             model_id=request.model_id,
             prompt=request.prompt,
@@ -186,122 +113,58 @@ def generate_api(
             temperature=request.temperature,
             top_k=request.top_k,
         )
-
     except ValueError as error:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        )
+        raise HTTPException(status_code=400, detail=str(error))
 
 
-@app.post(
-    "/admin/models/upload",
-    response_model=UploadModelResponse,
-)
+@app.post("/admin/models/upload", response_model=UploadModelResponse)
 async def upload_model_api(
-
     model_id: str = Form(...),
-
     name: str = Form(...),
-
     architecture: str = Form(...),
-
     config_file: UploadFile = File(...),
-
     weights_file: UploadFile = File(...),
 ):
-
     try:
-
-        validate_config_file(
-            config_file.filename
-        )
-
-        validate_weights_file(
-            weights_file.filename
-        )
-
+        validate_config_file(config_file.filename)
+        validate_weights_file(weights_file.filename)
         return upload_model_route(
-
             model_id=model_id,
-
             name=name,
-
             architecture=architecture,
-
             config_content=await config_file.read(),
-
             weights_content=await weights_file.read(),
         )
-
     except ValueError as error:
-
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        )
+        raise HTTPException(status_code=400, detail=str(error))
 
 
-@app.delete(
-    "/admin/models/{model_id}"
-)
-def delete_model_api(
-    model_id: str,
-):
-
+@app.delete("/admin/models/{model_id}")
+def delete_model_api(model_id: str):
     try:
-
-        return delete_model_route(
-            model_id
-        )
-
+        return delete_model_route(model_id)
     except ValueError as error:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(error),
-        )
+        raise HTTPException(status_code=404, detail=str(error))
 
 
-@app.get(
-    "/health"
-)
+@app.get("/health")
 def health():
-
     return get_health()
 
-@app.post(
-    "/generate/stream"
-)
-def generate_stream_api(
-    request: GenerateRequest,
-):
 
+@app.post("/generate/stream")
+def generate_stream_api(request: GenerateRequest):
     try:
-
-        generator = (
-            generate_text_stream(
-                model_id=request.model_id,
-                prompt=request.prompt,
-                max_new_tokens=request.max_new_tokens,
-                temperature=request.temperature,
-                top_k=request.top_k,
-            )
+        generator = generate_text_stream(
+            model_id=request.model_id,
+            prompt=request.prompt,
+            max_new_tokens=request.max_new_tokens,
+            temperature=request.temperature,
+            top_k=request.top_k,
         )
-
-        return StreamingResponse(
-            generator,
-            media_type="text/event-stream",
-        )
-
+        return StreamingResponse(generator, media_type="text/event-stream")
     except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
 
-        raise HTTPException(
-            status_code=400,
-            detail=str(error),
-        )
-        
-app.include_router(
-    metrics_router
-)
+
+app.include_router(metrics_router)

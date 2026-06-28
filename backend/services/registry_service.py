@@ -1,8 +1,56 @@
 import json
+import boto3
 from pathlib import Path
+from typing import List, Dict, Any
 
 REGISTRY_PATH = Path("storage/registry/models.json")
 STATUS_VALUES = {"REGISTERED", "LOADING", "READY", "FAILED"}
+
+def _get_s3_client():
+    return boto3.client('s3')
+
+def list_s3_models(bucket: str = "adithya-medical-llm-dataset") -> List[str]:
+    s3 = _get_s3_client()
+    model_names = set()
+    paginator = s3.get_paginator('list_objects_v2')
+    for page in paginator.paginate(Bucket=bucket, Prefix='models/'):
+        for obj in page.get('Contents', []):
+            key = obj['Key']
+            parts = key.split('/')
+            if len(parts) >= 3 and parts[2].endswith('.safetensors'):
+                model_names.add(parts[1])
+    return sorted(list(model_names))
+
+def get_s3_model_metadata(model_name: str, bucket: str = "adithya-medical-llm-dataset") -> Dict[str, Any]:
+    s3 = _get_s3_client()
+    try:
+        key = f'models/{model_name}/metadata.json'
+        response = s3.get_object(Bucket=bucket, Key=key)
+        return json.loads(response['Body'].read())
+    except s3.exceptions.NoSuchKey:
+        pass
+    try:
+        key = f'models/{model_name}/config.json'
+        response = s3.get_object(Bucket=bucket, Key=key)
+        config = json.loads(response['Body'].read())
+        return {
+            "name": model_name,
+            "model_type": "GPT",
+            "d_model": config.get('d_model'),
+            "num_layers": config.get('num_layers'),
+            "block_size": config.get('block_size'),
+            "description": "Model loaded from S3 (metadata inferred from config)"
+        }
+    except s3.exceptions.NoSuchKey:
+        return {"name": model_name, "error": "Metadata and config not found"}
+
+def s3_model_exists(model_name: str, bucket: str = "adithya-medical-llm-dataset") -> bool:
+    s3 = _get_s3_client()
+    try:
+        s3.head_object(Bucket=bucket, Key=f'models/{model_name}/model.safetensors')
+        return True
+    except s3.exceptions.ClientError:
+        return False
 
 def _initialize_registry():
     REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)

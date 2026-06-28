@@ -1,4 +1,6 @@
 import json
+import os
+import boto3
 from pathlib import Path
 from safetensors.torch import load_file
 from core.config.gpt_config import GPTConfig
@@ -38,3 +40,35 @@ def load_model(config_path: str | Path, weights_path: str | Path) -> GPTModel:
     model = load_model_structure(config_path)
     model = load_model_weights(model, weights_path)
     return model
+
+def _get_s3_client():
+    return boto3.client('s3')
+
+def _download_model_from_s3(model_name: str, bucket: str, target_dir: Path):
+    s3 = _get_s3_client()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    prefix = f'models/{model_name}/'
+    paginator = s3.get_paginator('list_objects_v2')
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get('Contents', []):
+            key = obj['Key']
+            filename = os.path.basename(key)
+            if filename in ['model.safetensors', 'config.json', 'metadata.json']:
+                local_path = target_dir / filename
+                s3.download_file(bucket, key, str(local_path))
+                print(f"Downloaded {key} to {local_path}")
+
+def ensure_model_cached(model_name: str, bucket: str = "adithya-medical-llm-dataset", cache_dir: str = "storage/deployed_models") -> Path:
+    cache_dir = Path(cache_dir)
+    model_dir = cache_dir / model_name
+    model_path = model_dir / 'model.safetensors'
+    if not model_path.exists():
+        print(f"Model {model_name} not found locally. Downloading from S3...")
+        _download_model_from_s3(model_name, bucket, model_dir)
+    return model_dir
+
+def load_model_from_s3(model_name: str, bucket: str = "adithya-medical-llm-dataset", cache_dir: str = "storage/deployed_models") -> GPTModel:
+    model_dir = ensure_model_cached(model_name, bucket, cache_dir)
+    config_path = model_dir / 'config.json'
+    weights_path = model_dir / 'model.safetensors'
+    return load_model(config_path, weights_path)
