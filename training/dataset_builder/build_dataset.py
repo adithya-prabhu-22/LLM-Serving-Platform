@@ -17,7 +17,7 @@ from training.dataset_builder.build_manifest import build_manifest
 
 DATASETS = {
     "wikipedia": ("wikimedia/wikipedia", "20231101.en"),
-    "pmc": ("pmc/open_access", None),
+    "healix": ("health360/Healix-Shot", None),
 }
 
 DTYPE = np.uint16
@@ -86,8 +86,8 @@ def build_dataset(
 
     if dataset_name not in DATASETS:
         raise ValueError(f"dataset_name must be one of {list(DATASETS.keys())}")
-    dataset_id, config_name = DATASETS[dataset_name]
 
+    dataset_id, config_name = DATASETS[dataset_name]
     if config_name is None:
         dataset = load_dataset(dataset_id, split="train", streaming=True)
     else:
@@ -162,14 +162,14 @@ def build_dataset(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Build a tokenized dataset from Wikipedia or PMC and upload chunks to S3."
+        description="Build a tokenized dataset from Wikipedia or Healix-Shot and upload chunks to S3."
     )
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["wikipedia", "pmc"],
+        choices=["wikipedia", "healix"],
         required=True,
-        help="Which dataset to process (wikipedia or pmc).",
+        help="Which dataset to process (wikipedia or healix).",
     )
     parser.add_argument(
         "--bucket",
