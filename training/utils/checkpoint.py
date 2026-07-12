@@ -2,7 +2,20 @@ from pathlib import Path
 import torch
 import random
 import numpy as np
+import boto3
+import os
 
+def upload_checkpoint_to_s3(local_path: str, bucket: str = "adithya-medical-llm-dataset", s3_key: str = None):
+    if s3_key is None:
+        s3_key = os.path.basename(local_path)
+    s3 = boto3.client('s3')
+    try:
+        s3.upload_file(local_path, bucket, f"checkpoints/{s3_key}")
+        print(f"Uploaded checkpoint to s3://{bucket}/checkpoints/{s3_key}")
+        os.remove(local_path)
+        print(f"Deleted local checkpoint: {local_path}")
+    except Exception as e:
+        print(f"Failed to upload checkpoint to S3: {e}")
 
 def save_checkpoint(
     model,
@@ -42,8 +55,8 @@ def save_checkpoint(
         "random_rng_state": random.getstate(),
     }
     torch.save(checkpoint, checkpoint_path)
+    upload_checkpoint_to_s3(str(checkpoint_path))
     return str(checkpoint_path)
-
 
 def load_checkpoint(
     checkpoint_path: str,
@@ -91,7 +104,6 @@ def load_checkpoint(
         "config": checkpoint.get("config", None),
     }
 
-
 def latest_checkpoint(checkpoint_dir: str):
     checkpoint_dir = Path(checkpoint_dir)
     if not checkpoint_dir.exists():
@@ -107,7 +119,6 @@ def latest_checkpoint(checkpoint_dir: str):
         return None
     checkpoints.sort(key=lambda item: item[0])
     return str(checkpoints[-1][1])
-
 
 def best_checkpoint(checkpoint_dir: str):
     checkpoint_path = Path(checkpoint_dir) / "best_checkpoint.pt"
