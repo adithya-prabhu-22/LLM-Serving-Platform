@@ -1,125 +1,156 @@
 # LLM Serving Platform
 
-A lightweight end-to-end platform for training, managing, and serving decoder-only Large Language Models (LLMs).
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.3%2B-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+![AWS](https://img.shields.io/badge/AWS-S3%2C%20EC2-yellow)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-This project focuses on providing a simple and extensible infrastructure for:
+A lightweight, end-to-end platform for training, managing, and serving decoder-only Large Language Models (LLMs). Built with simplicity and extensibility in mind, this platform allows you to train GPT-style models from scratch, monitor training, export weights, and deploy them for inference all with minimal friction.
 
-* Training GPT-style language models
-* Managing model artifacts
-* Exporting models using SafeTensors
-* Monitoring training and inference
-* Deploying models for inference
+---
+
+## Table of Contents
+
+- [Features](#features)
+  - [Model Architecture](#model-architecture)
+  - [Training Pipeline](#training-pipeline)
+  - [Serving and Infrastructure](#serving-and-infrastructure)
+- [Repository Structure](#repository-structure)
+- [Quick Start](#quick-start)
+- [Training Pipeline (Flow)](#training-pipeline-flow)
+- [Training Configuration](#training-configuration)
+- [Checkpointing and S3 Integration](#checkpointing-and-s3-integration)
+- [Monitoring Stack](#monitoring-stack)
+- [Deployment Architecture](#deployment-architecture)
+- [What Has Been Trained](#what-has-been-trained)
+- [Requirements](#requirements)
+- [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
 ## Features
 
 ### Model Architecture
+- Decoder-only Transformer
+- Multi-Head Causal Self-Attention
+- Rotary Positional Embeddings (RoPE)
+- Flash Attention support
+- KV Cache and Ring KV Cache
+- Configurable activation functions (GELU, ReLU, SiLU, Tanh)
+- Layer Normalization
+- SafeTensor export
 
-* Decoder-only Transformer
-* Multi-Head Causal Self Attention
-* Rotary Positional Embeddings (RoPE)
-* Flash Attention support
-* KV Cache support
-* Ring KV Cache support
-* Configurable Feed Forward Network
-* Configurable activation functions
-* Layer Normalization
-* SafeTensor export
+### Training Pipeline
+- GPT-2 tokenizer integration
+- Streaming dataset builder (supports Wikipedia, Healix-Shot, and others)
+- Non-overlapping sequence chunking (configurable)
+- Cross-Entropy loss with ignore_index
+- Validation loss and Perplexity tracking
+- Gradient accumulation and clipping
+- Automatic Mixed Precision (AMP)
+- Cosine annealing learning rate scheduler
+- Automatic checkpointing and resumption
+- Best model tracking
+- S3 checkpoint upload - local checkpoints are uploaded to S3 and deleted locally to save disk space
 
-### Training
-
-* GPT-2 tokenizer
-* Text chunking dataset pipeline
-* Dynamic batch collation
-* Cross-Entropy loss
-* Validation loss tracking
-* Perplexity evaluation
-* Gradient clipping
-* Gradient accumulation
-* Automatic checkpointing
-* Resume training support
-* Best model tracking
-* Automatic mixed precision (AMP)
-* Cosine learning rate scheduling
-* SafeTensor model exports
-
-### Infrastructure
-
-* Docker support
-* Prometheus monitoring
-* Grafana dashboards
-* Jenkins automation
-* Future Kubernetes support
+### Serving and Infrastructure
+- FastAPI backend with dynamic model loading from S3
+- Web-based UI (HTML + CSS + JS)
+- Docker Compose support (Backend + Prometheus + Grafana)
+- Prometheus metrics
+- Grafana dashboards
+- AWS S3 integration for model storage
+- Model registry (local + S3)
 
 ---
 
 ## Repository Structure
 
 ```text
-project-root/
+LLM-Serving-Platform/
 │
-├── core/
-│   ├── cache/
-│   ├── config/
-│   ├── models/
-│   └── generation/
+├── core/                     # Core model architecture
+│   ├── cache/                # KV Cache implementations
+│   ├── config/                # GPTConfig
+│   └── models/                # Attention, Embeddings, FFN, RoPE, etc.
 │
-├── training/
-│   ├── datasets/
-│   ├── trainer/
-│   ├── utils/
-│   └── train.py
+├── training/                 # Training pipeline
+│   ├── dataset_builder/      # Build chunks from raw datasets
+│   ├── datasets/              # StreamingDataset, chunk loader
+│   ├── trainer/                # Training loop, evaluator, loss
+│   └── utils/                  # Checkpointing, Safetensor export, tokenizer
 │
-├── backend/
-│   ├── api/
-│   ├── database/
-│   ├── schemas/
-│   └── services/
+├── backend/                  # FastAPI serving platform
+│   ├── api/                   # Routes, schemas
+│   ├── services/               # Model loader, registry, inference engine
+│   └── database/               # SQLite model registry
 │
-├── frontend/
-│   ├── static/
-│   └── templates/
+├── frontend/                 # Web UI
+│   ├── static/                 # CSS, JS
+│   └── templates/              # HTML pages
 │
-├── storage/
-│   ├── uploads/
-│   ├── deployed_models/
-│   └── logs/
+├── infrastructure/           # Deployment
+│   ├── docker/                 # Dockerfile and docker-compose.yml
+│   └── monitoring/             # Prometheus and Grafana configs
 │
-├── infrastructure/
-│   ├── docker/
-│   ├── monitoring/
-│   │   ├── prometheus/
-│   │   └── grafana/
-│   └── kubernetes_future/
-│
-├── tests/
-├── docs/
-└── requirements/
+├── storage/                  # Local storage (models, logs, checkpoints)
+├── tests/                     # Sanity tests
+├── requirements/               # Python dependencies
+└── docs/                       # Documentation
 ```
 
+## Quick Start
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/adithya-prabhu-22/LLM-Serving-Platform.git
+cd LLM-Serving-Platform
+```
+
+### 2. Set Up Python Environment
+```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install --no-cache-dir -r requirements/base.txt -r requirements/serving.txt
+```
+
+### 3. Train a Model (Example)
+```bash
+python -m training.train_streaming --config training/configs/gpt_150m_fast.json
+```
+
+### 4. Deploy the Serving Platform
+```bash
+cd infrastructure/docker
+docker-compose up -d --build
+```
+
+### 5. Open the UI
+Visit `http://<your-ec2-ip>:8000` in your browser. Select your model and start generating text.
+
 ---
 
-## Training Pipeline
+## Training Pipeline (Flow)
 
-The training pipeline consists of:
-
-1. Dataset loading
-2. Tokenization
-3. Sequence chunking
-4. Data collation
-5. Forward pass
-6. Loss computation
-7. Backpropagation
-8. Validation evaluation
-9. Checkpoint creation
-10. SafeTensor export
-
----
+```mermaid
+flowchart TD
+    A[Raw Data] --> B[Streaming Dataset Builder]
+    B --> C[Tokenization - GPT-2]
+    C --> D[Chunking - 2M tokens per chunk]
+    D --> E[S3 Upload]
+    E --> F[Manifest Generation]
+    F --> G[Streaming Training - GPU]
+    G --> H[Checkpointing - local to S3]
+    H --> I[Safetensor Export]
+    I --> J[Model Registry]
+    J --> K[Inference Server]
+```
 
 ## Training Configuration
 
-Example configuration:
+Example config (`gpt_150m_fast.json`):
 
 ```json
 {
@@ -129,162 +160,92 @@ Example configuration:
     "num_heads": 12,
     "num_layers": 12,
     "dropout": 0.1,
+    "ff_dim": 3072,
     "activation": "gelu",
-    "use_flash_attention": true,
+    "qkv_bias": false,
+    "use_flash_attention": false,
     "cache_type": "ring"
   },
-
   "training": {
-    "batch_size": 8,
-    "gradient_accumulation_steps": 4,
+    "batch_size": 2,
+    "gradient_accumulation_steps": 16,
     "learning_rate": 3e-4,
-    "weight_decay": 0.01,
-    "epochs": 10,
+    "weight_decay": 0.1,
+    "epochs": 1,
     "eval_interval": 500,
-    "save_interval": 1000,
-    "max_grad_norm": 1.0
+    "save_interval": 1000000,
+    "max_grad_norm": 1.0,
+    "num_workers": 4,
+    "seed": 42
   },
-
   "paths": {
-    "train_dir": "./data/train",
-    "val_dir": "./data/val",
-    "checkpoint_dir": "./checkpoints",
-    "output_dir": "./outputs"
+    "checkpoint_dir": "storage/checkpoints_streaming",
+    "output_dir": "storage/deployed_models/gpt_150m_fast"
+  },
+  "dataset": {
+    "manifest": "storage/dataset_build/combined_150m_manifest.json"
   }
 }
 ```
 
----
+## Checkpointing and S3 Integration
 
-## Running Training
+Checkpoints are saved locally and automatically uploaded to S3 to prevent disk space exhaustion during long training runs.
 
-```bash
-python training/train.py \
-    --config configs/train_config.json
+- Local checkpoint saved → uploaded to S3 → deleted locally
+- Resumable training from S3 checkpoints
+- Centralized model storage
+
+## Monitoring Stack
+
+| Service | Port | Description |
+|---|---|---|
+| FastAPI Backend | 8000 | REST API + Web UI |
+| Prometheus | 9090 | Metrics collection |
+| Grafana | 3000 | Dashboards (login: admin/admin) |
+
+## Deployment Architecture
+
+```mermaid
+flowchart TD
+    U[User Browser] --> API[FastAPI Backend<br/>Model loading, inference, registry]
+    API --> P[Prometheus<br/>Metrics]
+    API --> G[Grafana<br/>Dashboards]
+    API --> S3[(S3<br/>Model weights, configs, checkpoints)]
 ```
 
----
+## What Has Been Trained
 
-## Checkpointing
+| Model | Params | Dataset | Tokens | Final Loss | Context |
+|---|---|---|---|---|---|
+| gpt-150m-fast-v1 | 123.5M | General + Medical | 2.5B | 2.99 | 1024 |
 
-The platform automatically saves:
+## Requirements
 
-```text
-checkpoint_step_1000.pt
-checkpoint_step_2000.pt
-...
-```
-
-Each checkpoint contains:
-
-* Model state
-* Optimizer state
-* Scheduler state
-* AMP scaler state
-* Current epoch
-* Current step
-* Best validation loss
-
-Training can resume automatically from the latest checkpoint.
-
----
-
-## Model Export
-
-Models are exported as:
-
-```text
-model.safetensors
-best_model.safetensors
-```
-
-Configuration is also exported:
-
-```text
-config.json
-```
-
-This enables reproducible inference deployments.
-
----
-
-## Monitoring
-
-Planned monitoring stack:
-
-### Prometheus
-
-Tracks:
-
-* Training throughput
-* GPU utilization
-* Memory usage
-* Request latency
-* Model metrics
-
-### Grafana
-
-Provides dashboards for:
-
-* Training monitoring
-* Inference monitoring
-* Resource utilization
-* Model health
-
----
-
-## Deployment Architecture (V1)
-
-```text
-                 ┌──────────────────┐
-                 │ User Interface   │
-                 └─────────┬────────┘
-                           │
-                           ▼
-                 ┌──────────────────┐
-                 │ API Server       │
-                 └─────────┬────────┘
-                           │
-                           ▼
-                 ┌──────────────────┐
-                 │ Model Service    │
-                 └─────────┬────────┘
-                           │
-                           ▼
-                 ┌──────────────────┐
-                 │ GPT Model        │
-                 └──────────────────┘
-```
-
----
+- Python 3.9+
+- PyTorch 2.3+
+- Docker and Docker Compose
+- AWS CLI (optional, for S3 integration)
 
 ## Roadmap
 
 ### Current
-
-* GPT architecture
-* Training pipeline
-* Checkpointing
-* SafeTensor export
-* Validation tracking
-* AMP support
-* Gradient accumulation
+- GPT architecture with RoPE
+- Streaming training pipeline
+- Checkpointing with S3 sync
+- SafeTensor export
+- FastAPI serving platform
+- Prometheus + Grafana monitoring
+- Docker deployment
 
 ### Planned
-
-* Inference API
-* Model Registry
-* Model Versioning
-* Jenkins automation
-* Docker deployment
-* Prometheus metrics
-* Grafana dashboards
-* Multi-model serving
-* Kubernetes deployment
-* Distributed training
-
----
+- Multi-GPU training (DDP/FSDP)
+- Distributed inference
+- Quantization (GPTQ, AWQ)
+- LoRA fine-tuning support
+- Kubernetes deployment
+- CI/CD via GitHub Actions
 
 ## License
 
-This project is intended for educational, research, and personal deployment purposes.
+This project is licensed under the MIT License. See the LICENSE file for details.
