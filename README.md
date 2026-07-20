@@ -1,12 +1,6 @@
 # LLM Serving Platform
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.3%2B-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
-![AWS](https://img.shields.io/badge/AWS-S3%2C%20EC2-yellow)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue)
-
-A lightweight, end-to-end platform for training, managing, and serving decoder-only Large Language Models (LLMs). Built with simplicity and extensibility in mind, this platform allows you to train GPT-style models from scratch, monitor training, export weights, and deploy them for inference all with minimal friction.
+A lightweight, end-to-end platform for training, managing, and serving decoder-only Large Language Models (LLMs). Built with simplicity and extensibility in mind, this platform allows you to train GPT-style models from scratch, monitor training, export weights, and deploy them for inference with minimal friction.
 
 ---
 
@@ -18,12 +12,11 @@ A lightweight, end-to-end platform for training, managing, and serving decoder-o
   - [Serving and Infrastructure](#serving-and-infrastructure)
 - [Repository Structure](#repository-structure)
 - [Quick Start](#quick-start)
-- [Training Pipeline (Flow)](#training-pipeline-flow)
 - [Training Configuration](#training-configuration)
 - [Checkpointing and S3 Integration](#checkpointing-and-s3-integration)
 - [Monitoring Stack](#monitoring-stack)
 - [Deployment Architecture](#deployment-architecture)
-- [What Has Been Trained](#what-has-been-trained)
+- [Trained Models](#trained-models)
 - [Requirements](#requirements)
 - [Roadmap](#roadmap)
 - [License](#license)
@@ -59,7 +52,7 @@ A lightweight, end-to-end platform for training, managing, and serving decoder-o
 - FastAPI backend with dynamic model loading from S3
 - Web-based UI (HTML + CSS + JS)
 - Docker Compose support (Backend + Prometheus + Grafana)
-- Prometheus metrics
+- Prometheus metrics collection
 - Grafana dashboards
 - AWS S3 integration for model storage
 - Model registry (local + S3)
@@ -73,33 +66,35 @@ LLM-Serving-Platform/
 │
 ├── core/                     # Core model architecture
 │   ├── cache/                # KV Cache implementations
-│   ├── config/                # GPTConfig
-│   └── models/                # Attention, Embeddings, FFN, RoPE, etc.
+│   ├── config/               # GPTConfig
+│   └── models/               # Attention, Embeddings, FFN, RoPE, etc.
 │
 ├── training/                 # Training pipeline
 │   ├── dataset_builder/      # Build chunks from raw datasets
-│   ├── datasets/              # StreamingDataset, chunk loader
-│   ├── trainer/                # Training loop, evaluator, loss
-│   └── utils/                  # Checkpointing, Safetensor export, tokenizer
+│   ├── datasets/             # StreamingDataset, chunk loader
+│   ├── trainer/              # Training loop, evaluator, loss
+│   └── utils/                # Checkpointing, Safetensor export, tokenizer
 │
 ├── backend/                  # FastAPI serving platform
-│   ├── api/                   # Routes, schemas
-│   ├── services/               # Model loader, registry, inference engine
-│   └── database/               # SQLite model registry
+│   ├── api/                  # Routes, schemas
+│   ├── services/             # Model loader, registry, inference engine
+│   └── database/             # SQLite model registry
 │
 ├── frontend/                 # Web UI
-│   ├── static/                 # CSS, JS
-│   └── templates/              # HTML pages
+│   ├── static/               # CSS, JS
+│   └── templates/            # HTML pages
 │
 ├── infrastructure/           # Deployment
-│   ├── docker/                 # Dockerfile and docker-compose.yml
-│   └── monitoring/             # Prometheus and Grafana configs
+│   ├── docker/                # Dockerfile and docker-compose.yml
+│   └── monitoring/           # Prometheus and Grafana configs
 │
 ├── storage/                  # Local storage (models, logs, checkpoints)
-├── tests/                     # Sanity tests
-├── requirements/               # Python dependencies
-└── docs/                       # Documentation
+├── tests/                    # Sanity tests
+├── requirements/             # Python dependencies
+└── docs/                     # Documentation
 ```
+
+---
 
 ## Quick Start
 
@@ -132,25 +127,9 @@ Visit `http://<your-ec2-ip>:8000` in your browser. Select your model and start g
 
 ---
 
-## Training Pipeline (Flow)
-
-```mermaid
-flowchart TD
-    A[Raw Data] --> B[Streaming Dataset Builder]
-    B --> C[Tokenization - GPT-2]
-    C --> D[Chunking - 2M tokens per chunk]
-    D --> E[S3 Upload]
-    E --> F[Manifest Generation]
-    F --> G[Streaming Training - GPU]
-    G --> H[Checkpointing - local to S3]
-    H --> I[Safetensor Export]
-    I --> J[Model Registry]
-    J --> K[Inference Server]
-```
-
 ## Training Configuration
 
-Example config (`gpt_150m_fast.json`):
+Example configuration for a 150M model with fast training (`gpt_150m_fast.json`):
 
 ```json
 {
@@ -188,37 +167,56 @@ Example config (`gpt_150m_fast.json`):
 }
 ```
 
+---
+
 ## Checkpointing and S3 Integration
 
 Checkpoints are saved locally and automatically uploaded to S3 to prevent disk space exhaustion during long training runs.
 
-- Local checkpoint saved → uploaded to S3 → deleted locally
+- Local checkpoint saved to uploaded to S3 to deleted locally
 - Resumable training from S3 checkpoints
-- Centralized model storage
+- Centralized model storage for disaster recovery
+
+---
 
 ## Monitoring Stack
 
 | Service | Port | Description |
-|---|---|---|
-| FastAPI Backend | 8000 | REST API + Web UI |
+| :--- | :--- | :--- |
+| FastAPI Backend | 8000 | REST API and Web UI |
 | Prometheus | 9090 | Metrics collection |
 | Grafana | 3000 | Dashboards (login: admin/admin) |
 
+---
+
 ## Deployment Architecture
 
-```mermaid
-flowchart TD
-    U[User Browser] --> API[FastAPI Backend<br/>Model loading, inference, registry]
-    API --> P[Prometheus<br/>Metrics]
-    API --> G[Grafana<br/>Dashboards]
-    API --> S3[(S3<br/>Model weights, configs, checkpoints)]
-```
+The platform follows a clean separation of concerns with a scalable, cloud-native architecture.
 
-## What Has Been Trained
+### User-Facing Layer
+- Browser-based web interface
+- REST API for inference requests
 
-| Model | Params | Dataset | Tokens | Final Loss | Context |
-|---|---|---|---|---|---|
+### Backend Layer
+- FastAPI server handling model loading, inference, and registry management
+- Dynamic model loading from S3
+
+### Monitoring Layer
+- Prometheus for metrics collection
+- Grafana for visualization dashboards
+
+### Storage Layer
+- AWS S3 for model weights, configurations, and training checkpoints
+
+---
+
+## Trained Models
+
+| Model | Parameters | Dataset | Tokens | Final Loss | Context |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 | gpt-150m-fast-v1 | 123.5M | General + Medical | 2.5B | 2.99 | 1024 |
+
+---
 
 ## Requirements
 
@@ -227,18 +225,20 @@ flowchart TD
 - Docker and Docker Compose
 - AWS CLI (optional, for S3 integration)
 
+---
+
 ## Roadmap
 
-### Current
+### Current Features
 - GPT architecture with RoPE
 - Streaming training pipeline
 - Checkpointing with S3 sync
 - SafeTensor export
 - FastAPI serving platform
-- Prometheus + Grafana monitoring
+- Prometheus and Grafana monitoring
 - Docker deployment
 
-### Planned
+### Planned Features
 - Multi-GPU training (DDP/FSDP)
 - Distributed inference
 - Quantization (GPTQ, AWQ)
@@ -246,6 +246,20 @@ flowchart TD
 - Kubernetes deployment
 - CI/CD via GitHub Actions
 
+---
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+## Contact
+
+**Adithya Prabhu**  
+GitHub: [adithya-prabhu-22](https://github.com/adithya-prabhu-22)  
+Project Link: [https://github.com/adithya-prabhu-22/LLM-Serving-Platform](https://github.com/adithya-prabhu-22/LLM-Serving-Platform)
+
+---
+
+If you find this project useful, please consider giving it a star.
