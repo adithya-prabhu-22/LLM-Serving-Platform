@@ -1,9 +1,12 @@
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import UploadFile
 from fastapi import File
 from fastapi import Form
 from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routes.health import get_health
@@ -33,6 +36,8 @@ from backend.services.validator import (
 )
 from backend.api.routes.metrics import router as metrics_router
 
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
+
 app = FastAPI(
     title="LLM Serving Platform",
     version="1.0.0",
@@ -49,7 +54,22 @@ app.add_middleware(
 
 @app.get("/")
 def root_route():
-    return root()
+    return FileResponse(str(FRONTEND_DIR / "templates" / "index.html"))
+
+
+@app.get("/models-page")
+def models_page():
+    return FileResponse(str(FRONTEND_DIR / "templates" / "models.html"))
+
+
+@app.get("/upload-page")
+def upload_page():
+    return FileResponse(str(FRONTEND_DIR / "templates" / "upload.html"))
+
+
+@app.get("/generate-page")
+def generate_page():
+    return FileResponse(str(FRONTEND_DIR / "templates" / "generate.html"))
 
 
 @app.get("/health")
@@ -184,5 +204,11 @@ def delete_model_api(model_id: str):
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
 
+
+app.mount(
+    "/static",
+    StaticFiles(directory=str(FRONTEND_DIR / "static")),
+    name="static",
+)
 
 app.include_router(metrics_router)
