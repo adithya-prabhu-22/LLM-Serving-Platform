@@ -194,6 +194,9 @@ def generate_stream(
     generated_count = 0
     start_time = time.time()
 
+    generated_ids: list[int] = []
+    previous_text = ""
+
     for token_id in generate_tokens_stream(
         model=model,
         input_ids=input_ids,
@@ -203,7 +206,14 @@ def generate_stream(
     ):
         generated_count += 1
         GENERATED_TOKENS_TOTAL.inc()
-        yield decode([token_id])
+
+        generated_ids.append(token_id)
+        current_text = decode(generated_ids)
+        new_text = current_text[len(previous_text):]
+        previous_text = current_text
+
+        if new_text:
+            yield new_text
 
     elapsed_time = time.time() - start_time
 
