@@ -6,7 +6,7 @@ load_dotenv()
 import boto3
 
 s3 = boto3.client('s3')
-bucket = 'adithya-medical-llm-dataset'
+bucket = 'adithya-llm-models-2026'
 prefix = 'general_test/'
 
 os.makedirs('general_test', exist_ok=True)

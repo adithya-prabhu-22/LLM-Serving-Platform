@@ -51,7 +51,7 @@ def build_model_route(model_id: str):
         raise ValueError(f"Failed to build model '{model_id}': {str(error)}")
 
 
-def list_s3_models_route(bucket: str = "adithya-medical-llm-dataset"):
+def list_s3_models_route(bucket: str = "adithya-llm-models-2026"):
     """List all models available in S3."""
     REQUESTS_TOTAL.labels(endpoint="/models/s3").inc()
     try:
@@ -62,7 +62,7 @@ def list_s3_models_route(bucket: str = "adithya-medical-llm-dataset"):
         raise ValueError(f"Failed to list S3 models: {str(error)}")
 
 
-def load_s3_model_route(model_name: str, bucket: str = "adithya-medical-llm-dataset"):
+def load_s3_model_route(model_name: str, bucket: str = "adithya-llm-models-2026"):
     """Load a model from S3 (download if not cached)."""
     REQUESTS_TOTAL.labels(endpoint="/models/load").inc()
     # Check if model exists in S3

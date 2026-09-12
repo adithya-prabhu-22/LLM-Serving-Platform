@@ -9,7 +9,7 @@ STATUS_VALUES = {"REGISTERED", "LOADING", "READY", "FAILED"}
 def _get_s3_client():
     return boto3.client('s3')
 
-def list_s3_models(bucket: str = "adithya-medical-llm-dataset") -> List[str]:
+def list_s3_models(bucket: str = "adithya-llm-models-2026") -> List[str]:
     s3 = _get_s3_client()
     model_names = set()
     paginator = s3.get_paginator('list_objects_v2')
@@ -21,7 +21,7 @@ def list_s3_models(bucket: str = "adithya-medical-llm-dataset") -> List[str]:
                 model_names.add(parts[1])
     return sorted(list(model_names))
 
-def get_s3_model_metadata(model_name: str, bucket: str = "adithya-medical-llm-dataset") -> Dict[str, Any]:
+def get_s3_model_metadata(model_name: str, bucket: str = "adithya-llm-models-2026") -> Dict[str, Any]:
     s3 = _get_s3_client()
     try:
         key = f'models/{model_name}/metadata.json'
@@ -44,7 +44,7 @@ def get_s3_model_metadata(model_name: str, bucket: str = "adithya-medical-llm-da
     except s3.exceptions.NoSuchKey:
         return {"name": model_name, "error": "Metadata and config not found"}
 
-def s3_model_exists(model_name: str, bucket: str = "adithya-medical-llm-dataset") -> bool:
+def s3_model_exists(model_name: str, bucket: str = "adithya-llm-models-2026") -> bool:
     s3 = _get_s3_client()
     try:
         s3.head_object(Bucket=bucket, Key=f'models/{model_name}/model.safetensors')

@@ -58,7 +58,7 @@ def _download_model_from_s3(model_name: str, bucket: str, target_dir: Path):
                 s3.download_file(bucket, key, str(local_path))
                 print(f"Downloaded {key} to {local_path}")
 
-def ensure_model_cached(model_name: str, bucket: str = "adithya-medical-llm-dataset", cache_dir: str = "storage/deployed_models") -> Path:
+def ensure_model_cached(model_name: str, bucket: str = "adithya-llm-models-2026", cache_dir: str = "storage/deployed_models") -> Path:
     cache_dir = Path(cache_dir)
     model_dir = cache_dir / model_name
     model_path = model_dir / 'model.safetensors'
@@ -67,7 +67,7 @@ def ensure_model_cached(model_name: str, bucket: str = "adithya-medical-llm-data
         _download_model_from_s3(model_name, bucket, model_dir)
     return model_dir
 
-def load_model_from_s3(model_name: str, bucket: str = "adithya-medical-llm-dataset", cache_dir: str = "storage/deployed_models") -> GPTModel:
+def load_model_from_s3(model_name: str, bucket: str = "adithya-llm-models-2026", cache_dir: str = "storage/deployed_models") -> GPTModel:
     model_dir = ensure_model_cached(model_name, bucket, cache_dir)
     config_path = model_dir / 'config.json'
     weights_path = model_dir / 'model.safetensors'

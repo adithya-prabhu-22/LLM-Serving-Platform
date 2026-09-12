@@ -86,7 +86,7 @@ def build_model(model_id: str):
 
 
 @app.get("/models/s3")
-def list_s3_models(bucket: str = "adithya-medical-llm-dataset"):
+def list_s3_models(bucket: str = "adithya-llm-models-2026"):
     try:
         return list_s3_models_route(bucket)
     except ValueError as error:
@@ -94,7 +94,7 @@ def list_s3_models(bucket: str = "adithya-medical-llm-dataset"):
 
 
 @app.post("/models/load/{model_name}")
-def load_s3_model(model_name: str, bucket: str = "adithya-medical-llm-dataset"):
+def load_s3_model(model_name: str, bucket: str = "adithya-llm-models-2026"):
     try:
         return load_s3_model_route(model_name, bucket)
     except ValueError as error:

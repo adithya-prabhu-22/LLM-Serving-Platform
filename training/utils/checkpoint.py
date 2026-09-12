@@ -5,7 +5,7 @@ import numpy as np
 import boto3
 import os
 
-def upload_checkpoint_to_s3(local_path: str, bucket: str = "adithya-medical-llm-dataset", s3_key: str = None):
+def upload_checkpoint_to_s3(local_path: str, bucket: str = "adithya-llm-models-2026", s3_key: str = None):
     if s3_key is None:
         s3_key = os.path.basename(local_path)
     s3 = boto3.client('s3')
