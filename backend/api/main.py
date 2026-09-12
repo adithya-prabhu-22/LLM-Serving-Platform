@@ -52,17 +52,32 @@ def root_route():
     return root()
 
 
+@app.get("/health")
+def health():
+    return get_health()
+
+
 @app.get("/models")
 def models():
     return get_models()
 
 
-@app.get("/models/{model_id}")
-def model_by_id(model_id: str):
+@app.get("/models/s3")
+def list_s3_models(bucket: str = "adithya-llm-models-2026"):
     try:
-        return get_model_by_id(model_id)
+        return list_s3_models_route(bucket)
+    except ValueError as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+
+@app.post("/models/load/{model_name}")
+def load_s3_model(model_name: str, bucket: str = "adithya-llm-models-2026"):
+    try:
+        return load_s3_model_route(model_name, bucket)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
 
 
 @app.get("/models/status/{model_id}")
@@ -85,16 +100,24 @@ def build_model(model_id: str):
         raise HTTPException(status_code=400, detail=str(error))
 
 
-@app.get("/models/s3")
-def list_s3_models(bucket: str = "adithya-llm-models-2026"):
+@app.get("/models/{model_id}")
+def model_by_id(model_id: str):
+    try:
+        return get_model_by_id(model_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+
+
+@app.get("/list-s3-models")
+def list_s3_models_alt(bucket: str = "adithya-llm-models-2026"):
     try:
         return list_s3_models_route(bucket)
     except ValueError as error:
         raise HTTPException(status_code=500, detail=str(error))
 
 
-@app.post("/models/load/{model_name}")
-def load_s3_model(model_name: str, bucket: str = "adithya-llm-models-2026"):
+@app.post("/load-s3-model/{model_name}")
+def load_s3_model_alt(model_name: str, bucket: str = "adithya-llm-models-2026"):
     try:
         return load_s3_model_route(model_name, bucket)
     except ValueError as error:
@@ -113,6 +136,21 @@ def generate_api(request: GenerateRequest):
             temperature=request.temperature,
             top_k=request.top_k,
         )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+@app.post("/generate/stream")
+def generate_stream_api(request: GenerateRequest):
+    try:
+        generator = generate_text_stream(
+            model_id=request.model_id,
+            prompt=request.prompt,
+            max_new_tokens=request.max_new_tokens,
+            temperature=request.temperature,
+            top_k=request.top_k,
+        )
+        return StreamingResponse(generator, media_type="text/event-stream")
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
@@ -145,26 +183,6 @@ def delete_model_api(model_id: str):
         return delete_model_route(model_id)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
-
-
-@app.get("/health")
-def health():
-    return get_health()
-
-
-@app.post("/generate/stream")
-def generate_stream_api(request: GenerateRequest):
-    try:
-        generator = generate_text_stream(
-            model_id=request.model_id,
-            prompt=request.prompt,
-            max_new_tokens=request.max_new_tokens,
-            temperature=request.temperature,
-            top_k=request.top_k,
-        )
-        return StreamingResponse(generator, media_type="text/event-stream")
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
 
 
 app.include_router(metrics_router)
