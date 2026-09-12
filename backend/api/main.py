@@ -37,6 +37,8 @@ from backend.services.validator import (
 from backend.api.routes.metrics import router as metrics_router
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
+TEMPLATES_DIR = FRONTEND_DIR / "templates"
+STATIC_DIR = FRONTEND_DIR / "static"
 
 app = FastAPI(
     title="LLM Serving Platform",
@@ -50,26 +52,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/")
-def root_route():
-    return FileResponse(str(FRONTEND_DIR / "templates" / "index.html"))
-
-
-@app.get("/models-page")
-def models_page():
-    return FileResponse(str(FRONTEND_DIR / "templates" / "models.html"))
-
-
-@app.get("/upload-page")
-def upload_page():
-    return FileResponse(str(FRONTEND_DIR / "templates" / "upload.html"))
-
-
-@app.get("/generate-page")
-def generate_page():
-    return FileResponse(str(FRONTEND_DIR / "templates" / "generate.html"))
 
 
 @app.get("/health")
@@ -205,10 +187,21 @@ def delete_model_api(model_id: str):
         raise HTTPException(status_code=404, detail=str(error))
 
 
+@app.get("/")
+def root_route():
+    return FileResponse(str(TEMPLATES_DIR / "index.html"))
+
+
 app.mount(
     "/static",
-    StaticFiles(directory=str(FRONTEND_DIR / "static")),
+    StaticFiles(directory=str(STATIC_DIR)),
     name="static",
+)
+
+app.mount(
+    "/",
+    StaticFiles(directory=str(TEMPLATES_DIR), html=True),
+    name="templates",
 )
 
 app.include_router(metrics_router)
