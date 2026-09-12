@@ -6,8 +6,10 @@ from safetensors.torch import load_file
 from core.config.gpt_config import GPTConfig
 from core.models.gpt import GPTModel
 
+
 def normalize_path(path: str | Path) -> Path:
     return Path(str(path).replace("\\", "/")).resolve()
+
 
 def load_config(config_path: str | Path) -> GPTConfig:
     config_path = normalize_path(config_path)
@@ -15,15 +17,34 @@ def load_config(config_path: str | Path) -> GPTConfig:
         raise FileNotFoundError(f"Config file not found: {config_path}")
     with open(config_path, "r", encoding="utf-8") as file:
         config_data = json.load(file)
-    return GPTConfig(**config_data)
+    if "model" in config_data:
+        config_data = config_data["model"]
+    valid_fields = {
+        "vocab_size",
+        "block_size",
+        "d_model",
+        "num_heads",
+        "num_layers",
+        "dropout",
+        "ff_dim",
+        "activation",
+        "qkv_bias",
+        "use_flash_attention",
+        "cache_type",
+    }
+    filtered = {k: v for k, v in config_data.items() if k in valid_fields}
+    return GPTConfig(**filtered)
+
 
 def build_model(config: GPTConfig) -> GPTModel:
     return GPTModel(config)
+
 
 def load_model_structure(config_path: str | Path) -> GPTModel:
     config = load_config(config_path)
     model = build_model(config)
     return model
+
 
 def load_model_weights(model: GPTModel, weights_path: str | Path) -> GPTModel:
     weights_path = normalize_path(weights_path)
@@ -36,13 +57,16 @@ def load_model_weights(model: GPTModel, weights_path: str | Path) -> GPTModel:
     model.eval()
     return model
 
+
 def load_model(config_path: str | Path, weights_path: str | Path) -> GPTModel:
     model = load_model_structure(config_path)
     model = load_model_weights(model, weights_path)
     return model
 
+
 def _get_s3_client():
     return boto3.client('s3')
+
 
 def _download_model_from_s3(model_name: str, bucket: str, target_dir: Path):
     s3 = _get_s3_client()
@@ -58,7 +82,12 @@ def _download_model_from_s3(model_name: str, bucket: str, target_dir: Path):
                 s3.download_file(bucket, key, str(local_path))
                 print(f"Downloaded {key} to {local_path}")
 
-def ensure_model_cached(model_name: str, bucket: str = "adithya-llm-models-2026", cache_dir: str = "storage/deployed_models") -> Path:
+
+def ensure_model_cached(
+    model_name: str,
+    bucket: str = "adithya-llm-models-2026",
+    cache_dir: str = "storage/deployed_models",
+) -> Path:
     cache_dir = Path(cache_dir)
     model_dir = cache_dir / model_name
     model_path = model_dir / 'model.safetensors'
@@ -67,7 +96,12 @@ def ensure_model_cached(model_name: str, bucket: str = "adithya-llm-models-2026"
         _download_model_from_s3(model_name, bucket, model_dir)
     return model_dir
 
-def load_model_from_s3(model_name: str, bucket: str = "adithya-llm-models-2026", cache_dir: str = "storage/deployed_models") -> GPTModel:
+
+def load_model_from_s3(
+    model_name: str,
+    bucket: str = "adithya-llm-models-2026",
+    cache_dir: str = "storage/deployed_models",
+) -> GPTModel:
     model_dir = ensure_model_cached(model_name, bucket, cache_dir)
     config_path = model_dir / 'config.json'
     weights_path = model_dir / 'model.safetensors'
