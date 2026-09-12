@@ -13,6 +13,9 @@ const outputModel = document.getElementById("output-model");
 const outputTokens = document.getElementById("output-tokens");
 const modelStatus = document.getElementById("model-status");
 
+const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_TOP_K = 40;
+
 function showToast(message, type = "success") {
   const container = document.getElementById("notification-container");
   const toast = document.createElement("div");
@@ -104,6 +107,8 @@ generateButton.addEventListener("click", async () => {
   generateButton.disabled = true;
   generateButton.textContent = "Generating...";
   outputBox.textContent = "";
+  outputModel.textContent = modelSelect.options[modelSelect.selectedIndex].text;
+  outputTokens.textContent = "0";
 
   try {
     modelStatus.textContent = "Status: LOADING";
@@ -113,6 +118,8 @@ generateButton.addEventListener("click", async () => {
     }
     modelStatus.textContent = "Status: READY";
 
+    const maxTokens = Math.min(parseInt(maxTokensInput.value) || 200, 200);
+
     const response = await fetch("/generate/stream", {
       method: "POST",
       headers: {
@@ -121,7 +128,9 @@ generateButton.addEventListener("click", async () => {
       body: JSON.stringify({
         model_id: modelSelect.value,
         prompt,
-        max_new_tokens: parseInt(maxTokensInput.value),
+        max_new_tokens: maxTokens,
+        temperature: DEFAULT_TEMPERATURE,
+        top_k: DEFAULT_TOP_K,
       }),
     });
 
@@ -132,17 +141,19 @@ generateButton.addEventListener("click", async () => {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let tokensGenerated = 0;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         break;
       }
-      outputBox.textContent += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+      outputBox.textContent += chunk;
+      tokensGenerated += 1;
+      outputTokens.textContent = tokensGenerated.toString();
     }
 
-    outputModel.textContent = modelSelect.options[modelSelect.selectedIndex].text;
-    outputTokens.textContent = maxTokensInput.value;
     showToast("Generation completed");
   } catch (error) {
     console.error(error);
