@@ -1,16 +1,12 @@
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi import HTTPException
-from fastapi import UploadFile
-from fastapi import File
-from fastapi import Form
 from fastapi.responses import StreamingResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routes.health import get_health
-from backend.api.routes.root import root
 from backend.api.routes.models import (
     get_models,
     get_model_by_id,
@@ -23,17 +19,8 @@ from backend.api.routes.generation import (
     generate_text,
     generate_text_stream,
 )
-from backend.api.routes.admin import (
-    upload_model_route,
-    delete_model_route,
-)
 from backend.api.schemas.generate_request import GenerateRequest
 from backend.api.schemas.generate_response import GenerateResponse
-from backend.api.schemas.upload_model_response import UploadModelResponse
-from backend.services.validator import (
-    validate_config_file,
-    validate_weights_file,
-)
 from backend.api.routes.metrics import router as metrics_router
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
@@ -155,36 +142,6 @@ def generate_stream_api(request: GenerateRequest):
         return StreamingResponse(generator, media_type="text/event-stream")
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-
-
-@app.post("/admin/models/upload", response_model=UploadModelResponse)
-async def upload_model_api(
-    model_id: str = Form(...),
-    name: str = Form(...),
-    architecture: str = Form(...),
-    config_file: UploadFile = File(...),
-    weights_file: UploadFile = File(...),
-):
-    try:
-        validate_config_file(config_file.filename)
-        validate_weights_file(weights_file.filename)
-        return upload_model_route(
-            model_id=model_id,
-            name=name,
-            architecture=architecture,
-            config_content=await config_file.read(),
-            weights_content=await weights_file.read(),
-        )
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
-
-
-@app.delete("/admin/models/{model_id}")
-def delete_model_api(model_id: str):
-    try:
-        return delete_model_route(model_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
 
 
 @app.get("/")

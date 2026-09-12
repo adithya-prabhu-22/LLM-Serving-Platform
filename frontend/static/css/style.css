@@ -888,80 +888,6 @@ button:active {
   }
 }
 
-.upload-card {
-  background: var(--card-color);
-  border-radius: 20px;
-  padding: 32px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.upload-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 8%;
-  right: 8%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
-  opacity: 0.7;
-}
-
-.upload-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-.upload-btn {
-  margin-top: 10px;
-  min-width: 200px;
-}
-
-.file-upload {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 48px;
-}
-
-.file-label {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-bright) 100%);
-  color: white;
-  padding: 11px 18px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.32);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.file-label:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.50);
-}
-
-.file-name {
-  color: var(--secondary-text);
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 240px;
-}
-
-#upload-result {
-  margin-top: 20px;
-}
-
 .generate-workspace {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -1152,10 +1078,6 @@ button:active {
   .generate-workspace {
     grid-template-columns: 1fr;
   }
-
-  .upload-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 768px) {
@@ -1191,10 +1113,6 @@ button:active {
   }
 
   .models-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .upload-grid {
     grid-template-columns: 1fr;
   }
 
