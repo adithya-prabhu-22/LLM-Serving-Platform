@@ -9,6 +9,7 @@ from backend.services.inference_engine import (
     build_model,
     is_model_built,
     load_model as load_model_local,
+    LOADED_MODELS,
 )
 from backend.services.metrics_service import (
     REQUESTS_TOTAL,
@@ -52,7 +53,6 @@ def build_model_route(model_id: str):
 
 
 def list_s3_models_route(bucket: str = "adithya-llm-models-2026"):
-    """List all models available in S3."""
     REQUESTS_TOTAL.labels(endpoint="/models/s3").inc()
     try:
         models = list_s3_models(bucket)
@@ -63,14 +63,12 @@ def list_s3_models_route(bucket: str = "adithya-llm-models-2026"):
 
 
 def load_s3_model_route(model_name: str, bucket: str = "adithya-llm-models-2026"):
-    """Load a model from S3 (download if not cached)."""
     REQUESTS_TOTAL.labels(endpoint="/models/load").inc()
-    # Check if model exists in S3
     if not s3_model_exists(model_name, bucket):
         raise ValueError(f"Model '{model_name}' not found in S3.")
     try:
         model = load_model_from_s3(model_name, bucket)
-        # Optionally update local registry status to "READY"
+        LOADED_MODELS[model_name] = model
         return {
             "message": f"Model '{model_name}' loaded successfully from S3.",
             "status": "READY",
