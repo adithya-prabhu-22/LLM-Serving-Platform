@@ -12,6 +12,8 @@ def normalize_path(path: str | Path) -> Path:
 
 
 def load_config(config_path: str | Path) -> GPTConfig:
+    from backend.services.tokenizer_service import vocab_size as get_vocab_size
+
     config_path = normalize_path(config_path)
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -33,6 +35,7 @@ def load_config(config_path: str | Path) -> GPTConfig:
         "cache_type",
     }
     filtered = {k: v for k, v in config_data.items() if k in valid_fields}
+    filtered.setdefault("vocab_size", get_vocab_size())
     return GPTConfig(**filtered)
 
 
