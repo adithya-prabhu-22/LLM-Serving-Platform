@@ -1,6 +1,7 @@
 import time
 
 import torch
+from langsmith import traceable
 
 from core.models.gpt import GPTModel
 from backend.services.registry_service import (
@@ -106,6 +107,7 @@ def _validate_generation_length(
     return min(max_new_tokens, available_tokens)
 
 
+@traceable(run_type="llm", name="LLM-Generate")
 def generate(
     model_id: str,
     prompt: str,
@@ -159,6 +161,7 @@ def generate(
     return decode(generated_ids)
 
 
+@traceable(run_type="llm", name="LLM-Generate-Stream")
 def generate_stream(
     model_id: str,
     prompt: str,
